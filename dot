@@ -1,16 +1,48 @@
+-- Function to smoothly transition between rainbow colors
+function getRainbowColor(tick)
+    local hue = tick % 1
+    return Color3.fromHSV(hue, 1, 1)
+end
+
+-- Function for pulsating effect with smooth transitions and larger sizes
+function applyPulsate(dot)
+    if DotCustomization.Effects.Pulsate then
+        spawn(function()
+            while DotCustomization.Effects.Pulsate do
+                local initialSize = 1
+                local targetSize = math.random(120, 200) / 100 -- Random target size between 1.2 and 2.0
+                local duration = 0.1 -- Shorter duration for a much faster transition
+                local steps = 30 -- Number of steps for smoothness
+
+                -- Smoothly increase size
+                for i = 0, steps do
+                    local alpha = i / steps -- Calculate the alpha for interpolation
+                    local newSize = initialSize + (targetSize - initialSize) * alpha
+                    dot.Size = UDim2.new(newSize, 0, newSize, 0)
+                    wait(duration / steps)
+                end
+
+                -- Smoothly decrease size back to original
+                for i = 0, steps do
+                    local alpha = i / steps
+                    dot.Size = UDim2.new(targetSize - (targetSize - initialSize) * alpha, 0, targetSize - (targetSize - initialSize) * alpha, 0)
+                    wait(duration / steps)
+                end
+            end
+        end)
+    end
+end
+
+-- Original Script Starts
 local SelectedPart = "HumanoidRootPart" -- Default SelectedPart for the dot lock
 local CC = game:GetService("Workspace").CurrentCamera
 local Plr
 local enabled = false
+local accommodationFactor = 0.12348
 local mouse = game.Players.LocalPlayer:GetMouse()
 local placemarker = Instance.new("Part", game.Workspace)
-placemarker.Anchored = true
-placemarker.CanCollide = false
-placemarker.Size = Vector3.new(6, 6, 6)
-placemarker.Transparency = 1
-local accommodationFactor = Dotlock.Prediction.PredictionValue
 
--- Function to create a marker for Dotlock
+-- Updated makemarker function to include new customization options
 function makemarker(Parent, Adornee, Color, Size, Size2)
     local e = Instance.new("BillboardGui", Parent)
     e.Name = "PP"
@@ -52,15 +84,86 @@ function makemarker(Parent, Adornee, Color, Size, Size2)
     outline.Thickness = DotCustomization.OutlineThickness
     outline.Transparency = DotCustomization.Transparency
 
+    -- Apply Pulsating Effect
+    applyPulsate(a)  -- Ensure you're applying this to the Frame
+
     return e
 end
 
--- Function to find the closest player to the cursor
+local data = game.Players:GetPlayers()
+function noob(player)
+    local character
+    repeat wait() until player.Character
+    local handler = makemarker(guimain, player.Character:WaitForChild(SelectedPart), Color3.fromRGB(68, 214, 44), 0.6, 3)
+    handler.Name = player.Name
+    player.CharacterAdded:connect(function(Char) handler.Adornee = Char:WaitForChild(SelectedPart) end)
+
+    spawn(function()                                    
+        while wait() do
+            if player and player.Character then
+                -- Additional code can go here
+            end                                    
+        end                                     
+    end)                                    
+end                                    
+
+for i = 1, #data do
+    if data[i] ~= game.Players.LocalPlayer then
+        noob(data[i])
+    end
+end
+
+game.Players.PlayerAdded:connect(function(Player)
+    noob(Player)
+end)
+
+spawn(function()
+    placemarker.Anchored = true
+    placemarker.CanCollide = false
+    if Dotlock.DOT == true then
+        placemarker.Size = Vector3.new(6, 6, 6)
+    else
+        placemarker.Size = Vector3.new(0, 0, 0)
+    end
+    placemarker.Transparency = 1
+    if Dotlock.DOT then
+        makemarker(placemarker, placemarker, Color3.fromRGB(68, 214, 44), 0.6, 0)
+    end
+end)
+
+-- Fixed Dotlock Toggle Logic
+game.Players.LocalPlayer:GetMouse().KeyDown:Connect(function(k)
+    if k == Dotlock.Key and Dotlock.Enabled then
+        if enabled == true then
+            enabled = false
+            Plr = nil -- Clear the locked player when untoggling
+            if Dotlock.NOTIF == true then
+                game.StarterGui:SetCore("SendNotification", {
+                    Title = "Vnly Ware",
+                    Text = "Unlocked Dot Lock",
+                    Icon = "http://www.roblox.com/asset/?id=8850953349",
+                    Duration = 1,
+                })
+            end
+        else
+            Plr = getClosestPlayerToCursor()
+            enabled = true
+            if Plr and Dotlock.NOTIF == true then
+                game.StarterGui:SetCore("SendNotification", {
+                    Title = "Vnly Ware",
+                    Text = "Locked on: " .. tostring(Plr.Name), 
+                    Icon = "http://www.roblox.com/asset/?id=8850953349",
+                    Duration = 1,
+                })
+            end
+        end
+    end
+end)
+
+-- Function to get closest player to cursor
 function getClosestPlayerToCursor()
     local closestPlayer
     local shortestDistance = 9999  -- High initial value for shortest distance
-    local mouse = game.Players.LocalPlayer:GetMouse()
-    local CC = game:GetService("Workspace").CurrentCamera
 
     for i, v in pairs(game.Players:GetPlayers()) do
         if v ~= game.Players.LocalPlayer and v.Character and v.Character:FindFirstChild("Humanoid") and v.Character.Humanoid.Health > 0 and v.Character:FindFirstChild("HumanoidRootPart") then
@@ -75,47 +178,41 @@ function getClosestPlayerToCursor()
     return closestPlayer
 end
 
--- Dotlock toggle handler
-game.Players.LocalPlayer:GetMouse().KeyDown:Connect(function(k)
-    if k == Dotlock.Key and Dotlock.Enabled then
-        if enabled then
-            enabled = false
-            Plr = nil -- Clear the lock target when untoggled
-            if Dotlock.NOTIF then
-                game.StarterGui:SetCore("SendNotification", {
-                    Title = "Vnly Ware",
-                    Text = "Unlocked Dot Lock",
-                    Icon = "http://www.roblox.com/asset/?id=8850953349",
-                    Duration = 1,
-                })
-            end
-        else
-            Plr = getClosestPlayerToCursor()
-            enabled = true
-            if Plr and Dotlock.NOTIF then
-                game.StarterGui:SetCore("SendNotification", {
-                    Title = "Vnly Ware",
-                    Text = "Locked on: " .. tostring(Plr.Name), 
-                    Icon = "http://www.roblox.com/asset/?id=8850953349",
-                    Duration = 1,
-                })
-            end
-        end
-    end
-end)
-
--- Update the Dotlock position and mouse only when locked
 game:GetService("RunService").Stepped:connect(function()
     if enabled and Plr and Plr.Character and Plr.Character:FindFirstChild("HumanoidRootPart") then
         placemarker.CFrame = CFrame.new(Plr.Character.HumanoidRootPart.Position + (Plr.Character.HumanoidRootPart.Velocity * accommodationFactor))
-
+        
         -- Update mouse position to the dot using UpdateMousePosI
         local updateMousePosEvent = game.ReplicatedStorage:FindFirstChild("UpdateMousePosI2")
         if updateMousePosEvent then
             updateMousePosEvent:FireServer(placemarker.Position)
         end
     else
-        -- Reset the placemarker’s position when no target is locked
+        -- Reset placemarker's position when no player is locked
         placemarker.CFrame = CFrame.new(0, 9999, 0)
     end
 end)
+
+local mt = getrawmetatable(game)
+local old = mt.__namecall
+setreadonly(mt, false)
+mt.__namecall = newcclosure(function(...)
+    local args = {...}
+    if Dotlock.Enabled and getnamecallmethod() == "FireServer" and args[2] == "UpdateMousePosI2" then
+        if Plr and Plr.Character and Plr.Character:FindFirstChild("HumanoidRootPart") then
+            args[3] = Plr.Character.HumanoidRootPart.Position + (Plr.Character.HumanoidRootPart.Velocity * accommodationFactor)
+        end
+        return old(unpack(args))
+    end
+    return old(...)
+end)
+
+if Dotlock.AIRSHOT then
+    Plr.Character:WaitForChild("Humanoid").StateChanged:Connect(function(old, new)
+        if new == Enum.HumanoidStateType.Freefall then
+            Dotlock.Part = "RightFoot"
+        else
+            Dotlock.Part = "LowerTorso"
+        end
+    end)
+end
