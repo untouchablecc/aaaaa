@@ -1,0 +1,200 @@
+-- Function to find the nearest enemy for Camlock
+function findNearestEnemy()
+    local ClosestDistance, ClosestPlayer = math.huge, nil
+    local CenterPosition = Vector2.new(game:GetService("GuiService"):GetScreenResolution().X / 2, game:GetService("GuiService"):GetScreenResolution().Y / 2)
+
+    for _, Player in ipairs(game:GetService("Players"):GetPlayers()) do
+        if Player ~= game.Players.LocalPlayer then
+            local Character = Player.Character
+            if Character and Character:FindFirstChild("HumanoidRootPart") and Character.Humanoid.Health > 0 then
+                local Position, IsVisibleOnViewport = game:GetService("Workspace").CurrentCamera:WorldToViewportPoint(Character.HumanoidRootPart.Position)
+                if IsVisibleOnViewport then
+                    local Distance = (CenterPosition - Vector2.new(Position.X, Position.Y)).Magnitude
+                    if Distance < ClosestDistance then
+                        ClosestPlayer = Character.HumanoidRootPart
+                        ClosestDistance = Distance
+                    end
+                end
+            end
+        end
+    end
+
+    return ClosestPlayer
+end
+
+-- Main RunService loop for Camlock functionality
+local enemyCamlock = nil
+game:GetService("RunService").Heartbeat:Connect(function()
+    if Camlock.Enabled and Camlock.Active and enemyCamlock then
+        local camera = workspace.CurrentCamera
+        camera.CFrame = CFrame.new(camera.CFrame.p, enemyCamlock.Position + enemyCamlock.Velocity * Camlock.Prediction)
+    end
+end)
+
+-- Toggling Camlock using UserInputService for reliable key detection
+local UIS = game:GetService("UserInputService")
+UIS.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end -- Prevent input if the user is typing in chat or UI
+    if input.KeyCode == Camlock.Key then
+        Camlock.Active = not Camlock.Active
+
+        if Camlock.Active then
+            enemyCamlock = findNearestEnemy()
+            if enemyCamlock then
+                if Camlock.NOTIF then
+                    game.StarterGui:SetCore("SendNotification", {
+                        Title = "Camlock",
+                        Text = "Locked on: " .. tostring(enemyCamlock.Parent.Name),
+                        Icon = "http://www.roblox.com/asset/?id=8850953349",
+                        Duration = 1,
+                    })
+                end
+            end
+        else
+            enemyCamlock = nil
+            if Camlock.NOTIF then
+                game.StarterGui:SetCore("SendNotification", {
+                    Title = "Camlock",
+                    Text = "Unlocked Camlock",
+                    Icon = "http://www.roblox.com/asset/?id=8850953349",
+                    Duration = 1,
+                })
+            end
+        end
+    end
+end)
+Dotlock Functionality Script:
+lua
+Copy code
+-- Dotlock settings
+Dotlock = {
+    ['Enabled'] = true,
+    ['Key'] = "x",
+    ['DOT'] = true,
+    ['AIRSHOT'] = true,
+    ['NOTIF'] = true,
+
+    -- Dotlock Prediction subcategory
+    ['Prediction'] = {
+        ['Enabled'] = true,
+        ['PredictionValue'] = 0.1225
+    }
+}
+
+-- Dot Customization settings
+DotCustomization = {
+    ['DotSize'] = 3.0,                -- Size of the dot
+    ['DotColor'] = Color3.fromRGB(0, 0, 0), -- Default color of the dot outline
+    ['OutlineThickness'] = 1,         -- Thickness of the dot's outline
+    ['Transparency'] = 0,             -- Transparency of the outline
+    ['Shape'] = "Circle",             -- Available shapes: Circle, Square, Skull
+
+    -- Subcategories for DotCustomization
+    ['Effects'] = {
+        ['Rainbow'] = true,            -- If true, the dot will transition through rainbow colors
+        ['Pulsate'] = false,           -- If true, the dot will pulsate in size
+    },
+}
+
+-- Function to smoothly transition between rainbow colors
+function getRainbowColor(tick)
+    local hue = tick % 1
+    return Color3.fromHSV(hue, 1, 1)
+end
+
+-- Function for pulsating effect with smooth transitions and larger sizes
+function applyPulsate(dot)
+    if DotCustomization.Effects.Pulsate then
+        spawn(function()
+            while DotCustomization.Effects.Pulsate do
+                local initialSize = 1
+                local targetSize = math.random(120, 200) / 100 -- Random target size between 1.2 and 2.0
+                local duration = 0.1 -- Shorter duration for a much faster transition
+                local steps = 30 -- Number of steps for smoothness
+
+                -- Smoothly increase size
+                for i = 0, steps do
+                    local alpha = i / steps -- Calculate the alpha for interpolation
+                    local newSize = initialSize + (targetSize - initialSize) * alpha
+                    dot.Size = UDim2.new(newSize, 0, newSize, 0)
+                    wait(duration / steps)
+                end
+
+                -- Smoothly decrease size back to original
+                for i = 0, steps do
+                    local alpha = i / steps
+                    dot.Size = UDim2.new(targetSize - (targetSize - initialSize) * alpha, 0, targetSize - (targetSize - initialSize) * alpha, 0)
+                    wait(duration / steps)
+                end
+            end
+        end)
+    end
+end
+
+-- Function to create marker for Dotlock
+function makemarker(Parent, Adornee, Color, Size, Size2)
+    local e = Instance.new("BillboardGui", Parent)
+    e.Name = "PP"
+    e.Adornee = Adornee
+    e.Size = UDim2.new(Size * DotCustomization.DotSize, Size2, Size * DotCustomization.DotSize, Size2)
+    e.AlwaysOnTop = Dotlock.DOT
+
+    local a = Instance.new("Frame", e)
+    a.Size = UDim2.new(1, 0, 1, 0)
+    a.BackgroundTransparency = 1
+
+    -- Apply shape based on customization
+    if DotCustomization.Shape == "Circle" then
+        local uicorner = Instance.new("UICorner", a)
+        uicorner.CornerRadius = UDim.new(1, 0)
+    elseif DotCustomization.Shape == "Square" then
+        -- No UICorner applied, so it remains a square
+    elseif DotCustomization.Shape == "Skull" then
+        local skull = Instance.new("ImageLabel", a)
+        skull.Image = "http://www.roblox.com/asset/?id=8850953349" -- Skull shape asset
+        skull.Size = UDim2.new(1, 0, 1, 0)
+        skull.BackgroundTransparency = 1
+        return skull
+    end
+
+    -- Create the outline
+    local outline = Instance.new("UIStroke", a)
+    if DotCustomization.Effects.Rainbow then
+        spawn(function()
+            while DotCustomization.Effects.Rainbow do
+                outline.Color = getRainbowColor(tick())
+                wait(0.1)
+            end
+        end)
+    else
+        outline.Color = DotCustomization.DotColor
+    end
+
+    outline.Thickness = DotCustomization.OutlineThickness
+    outline.Transparency = DotCustomization.Transparency
+
+    -- Apply Pulsating Effect
+    applyPulsate(a)  -- Ensure you're applying this to the Frame
+
+    return e
+end
+
+-- Function to get the closest player to the cursor
+function getClosestPlayerToCursor()
+    local closestPlayer
+    local shortestDistance = 9999  -- High initial value for shortest distance
+    local mouse = game.Players.LocalPlayer:GetMouse()
+    local CC = game:GetService("Workspace").CurrentCamera
+
+    for i, v in pairs(game.Players:GetPlayers()) do
+        if v ~= game.Players.LocalPlayer and v.Character and v.Character:FindFirstChild("Humanoid") and v.Character.Humanoid.Health > 0 and v.Character:FindFirstChild("HumanoidRootPart") then
+            local pos = CC:WorldToViewportPoint(v.Character.PrimaryPart.Position)
+            local magnitude = (Vector2.new(pos.X, pos.Y) - Vector2.new(mouse.X, mouse.Y)).magnitude
+            if magnitude < shortestDistance then
+                closestPlayer = v
+                shortestDistance = magnitude
+            end
+        end
+    end
+    return closestPlayer
+end
