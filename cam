@@ -1,0 +1,65 @@
+-- Function to find the nearest enemy for Camlock
+function findNearestEnemy()
+    local ClosestDistance, ClosestPlayer = math.huge, nil
+    local CenterPosition = Vector2.new(game:GetService("GuiService"):GetScreenResolution().X / 2, game:GetService("GuiService"):GetScreenResolution().Y / 2)
+
+    for _, Player in ipairs(game:GetService("Players"):GetPlayers()) do
+        if Player ~= game.Players.LocalPlayer then
+            local Character = Player.Character
+            if Character and Character:FindFirstChild("HumanoidRootPart") and Character.Humanoid.Health > 0 then
+                local Position, IsVisibleOnViewport = game:GetService("Workspace").CurrentCamera:WorldToViewportPoint(Character.HumanoidRootPart.Position)
+                if IsVisibleOnViewport then
+                    local Distance = (CenterPosition - Vector2.new(Position.X, Position.Y)).Magnitude
+                    if Distance < ClosestDistance then
+                        ClosestPlayer = Character.HumanoidRootPart
+                        ClosestDistance = Distance
+                    end
+                end
+            end
+        end
+    end
+
+    return ClosestPlayer
+end
+
+-- Main RunService loop for Camlock functionality
+local enemyCamlock = nil
+game:GetService("RunService").Heartbeat:Connect(function()
+    if Camlock.Enabled and Camlock.Active and enemyCamlock then
+        local camera = workspace.CurrentCamera
+        camera.CFrame = CFrame.new(camera.CFrame.p, enemyCamlock.Position + enemyCamlock.Velocity * Camlock.Prediction)
+    end
+end)
+
+-- Toggling Camlock using UserInputService for reliable key detection
+local UIS = game:GetService("UserInputService")
+UIS.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end -- Prevent input if the user is typing in chat or UI
+    if input.KeyCode == Camlock.Key then
+        Camlock.Active = not Camlock.Active
+
+        if Camlock.Active then
+            enemyCamlock = findNearestEnemy()
+            if enemyCamlock then
+                if Camlock.NOTIF then
+                    game.StarterGui:SetCore("SendNotification", {
+                        Title = "Camlock",
+                        Text = "Locked on: " .. tostring(enemyCamlock.Parent.Name),
+                        Icon = "http://www.roblox.com/asset/?id=8850953349",
+                        Duration = 1,
+                    })
+                end
+            end
+        else
+            enemyCamlock = nil
+            if Camlock.NOTIF then
+                game.StarterGui:SetCore("SendNotification", {
+                    Title = "Camlock",
+                    Text = "Unlocked Camlock",
+                    Icon = "http://www.roblox.com/asset/?id=8850953349",
+                    Duration = 1,
+                })
+            end
+        end
+    end
+end)
