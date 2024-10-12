@@ -131,12 +131,13 @@ spawn(function()
     end
 end)
 
--- Fixed Dotlock Toggle Logic
+-- Dotlock Toggle and Notification Logic
 game.Players.LocalPlayer:GetMouse().KeyDown:Connect(function(k)
     if k == Dotlock.Key and Dotlock.Enabled then
         if enabled == true then
             enabled = false
-            Plr = nil -- Clear the locked player when untoggling
+            -- Clear the locked player and stop updates
+            Plr = nil
             if Dotlock.NOTIF == true then
                 game.StarterGui:SetCore("SendNotification", {
                     Title = "Vnly Ware",
@@ -188,8 +189,7 @@ game:GetService("RunService").Stepped:connect(function()
             updateMousePosEvent:FireServer(placemarker.Position)
         end
     else
-        -- Reset placemarker's position when no player is locked
-        placemarker.CFrame = CFrame.new(0, 9999, 0)
+        placemarker.CFrame = CFrame.new(0, 9999, 0) -- Reset placemarker when not locked
     end
 end)
 
@@ -199,6 +199,7 @@ setreadonly(mt, false)
 mt.__namecall = newcclosure(function(...)
     local args = {...}
     if Dotlock.Enabled and getnamecallmethod() == "FireServer" and args[2] == "UpdateMousePosI2" then
+        -- Only update mouse position if there's a locked player
         if Plr and Plr.Character and Plr.Character:FindFirstChild("HumanoidRootPart") then
             args[3] = Plr.Character.HumanoidRootPart.Position + (Plr.Character.HumanoidRootPart.Velocity * accommodationFactor)
         end
@@ -207,6 +208,7 @@ mt.__namecall = newcclosure(function(...)
     return old(...)
 end)
 
+-- Airshot Logic
 if Dotlock.AIRSHOT then
     Plr.Character:WaitForChild("Humanoid").StateChanged:Connect(function(old, new)
         if new == Enum.HumanoidStateType.Freefall then
