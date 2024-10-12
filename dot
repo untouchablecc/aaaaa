@@ -1,4 +1,3 @@
--- Original Script Starts
 local SelectedPart = "HumanoidRootPart" -- Default SelectedPart for the dot lock
 local CC = game:GetService("Workspace").CurrentCamera
 local Plr
