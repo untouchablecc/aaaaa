@@ -1,11 +1,17 @@
--- Updated Dotlock Toggle Logic
-local Plr = nil
-local enabled = false
+-- Original Script Starts
+local SelectedPart = "HumanoidRootPart" -- Default SelectedPart for the dot lock
 local CC = game:GetService("Workspace").CurrentCamera
+local Plr
+local enabled = false
 local mouse = game.Players.LocalPlayer:GetMouse()
 local placemarker = Instance.new("Part", game.Workspace)
+placemarker.Anchored = true
+placemarker.CanCollide = false
+placemarker.Size = Vector3.new(6, 6, 6)
+placemarker.Transparency = 1
+local accommodationFactor = Dotlock.Prediction.PredictionValue
 
--- Function to create marker for Dotlock
+-- Function to create a marker for Dotlock
 function makemarker(Parent, Adornee, Color, Size, Size2)
     local e = Instance.new("BillboardGui", Parent)
     e.Name = "PP"
@@ -50,12 +56,12 @@ function makemarker(Parent, Adornee, Color, Size, Size2)
     return e
 end
 
--- Function to get the closest player to the cursor
+-- Function to find the closest player to the cursor
 function getClosestPlayerToCursor()
     local closestPlayer
     local shortestDistance = 9999  -- High initial value for shortest distance
-    local CC = game:GetService("Workspace").CurrentCamera
     local mouse = game.Players.LocalPlayer:GetMouse()
+    local CC = game:GetService("Workspace").CurrentCamera
 
     for i, v in pairs(game.Players:GetPlayers()) do
         if v ~= game.Players.LocalPlayer and v.Character and v.Character:FindFirstChild("Humanoid") and v.Character.Humanoid.Health > 0 and v.Character:FindFirstChild("HumanoidRootPart") then
@@ -70,13 +76,13 @@ function getClosestPlayerToCursor()
     return closestPlayer
 end
 
--- Handle toggling Dotlock
+-- Dotlock toggle handler
 game.Players.LocalPlayer:GetMouse().KeyDown:Connect(function(k)
     if k == Dotlock.Key and Dotlock.Enabled then
-        if enabled == true then
+        if enabled then
             enabled = false
-            Plr = nil -- Clear the locked player when untoggling
-            if Dotlock.NOTIF == true then
+            Plr = nil -- Clear the lock target when untoggled
+            if Dotlock.NOTIF then
                 game.StarterGui:SetCore("SendNotification", {
                     Title = "Vnly Ware",
                     Text = "Unlocked Dot Lock",
@@ -87,7 +93,7 @@ game.Players.LocalPlayer:GetMouse().KeyDown:Connect(function(k)
         else
             Plr = getClosestPlayerToCursor()
             enabled = true
-            if Plr and Dotlock.NOTIF == true then
+            if Plr and Dotlock.NOTIF then
                 game.StarterGui:SetCore("SendNotification", {
                     Title = "Vnly Ware",
                     Text = "Locked on: " .. tostring(Plr.Name), 
@@ -99,18 +105,18 @@ game.Players.LocalPlayer:GetMouse().KeyDown:Connect(function(k)
     end
 end)
 
--- Update Dotlock Mouse Position only when enabled and locked on
+-- Update the Dotlock position and mouse only when locked
 game:GetService("RunService").Stepped:connect(function()
     if enabled and Plr and Plr.Character and Plr.Character:FindFirstChild("HumanoidRootPart") then
-        placemarker.CFrame = CFrame.new(Plr.Character.HumanoidRootPart.Position + (Plr.Character.HumanoidRootPart.Velocity * Dotlock.Prediction.PredictionValue))
+        placemarker.CFrame = CFrame.new(Plr.Character.HumanoidRootPart.Position + (Plr.Character.HumanoidRootPart.Velocity * accommodationFactor))
 
-        -- Update mouse position to the dot using UpdateMousePosI when locked
+        -- Update mouse position to the dot using UpdateMousePosI
         local updateMousePosEvent = game.ReplicatedStorage:FindFirstChild("UpdateMousePosI2")
         if updateMousePosEvent then
             updateMousePosEvent:FireServer(placemarker.Position)
         end
     else
-        -- Reset the placemarker's position when no player is locked
+        -- Reset the placemarker’s position when no target is locked
         placemarker.CFrame = CFrame.new(0, 9999, 0)
     end
 end)
