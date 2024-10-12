@@ -1,18 +1,3 @@
--- Dot Customization settings
-DotCustomization = {
-    ['DotSize'] = 3.0,                -- Size of the dot
-    ['DotColor'] = Color3.fromRGB(0, 0, 0), -- Default color of the dot outline
-    ['OutlineThickness'] = 1,         -- Thickness of the dot's outline
-    ['Transparency'] = 0,             -- Transparency of the outline
-    ['Shape'] = "Circle",             -- Available shapes: Circle, Square, Skull
-
-    -- Subcategories for DotCustomization
-    ['Effects'] = {
-        ['Rainbow'] = true,            -- If true, the dot will transition through rainbow colors
-        ['Pulsate'] = false,            -- If true, the dot will pulsate in size
-    },
-}
-
 -- Function to smoothly transition between rainbow colors
 function getRainbowColor(tick)
     local hue = tick % 1
