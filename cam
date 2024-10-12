@@ -32,11 +32,18 @@ end
 -- Main RunService loop for Camlock functionality
 local enemyCamlock = nil
 game:GetService("RunService").Heartbeat:Connect(function()
-    if Camlock.Enabled and Camlock.Active and enemyCamlock then
-        local camera = workspace.CurrentCamera
-        -- Check if Velocity exists on HumanoidRootPart before using it
-        local velocity = enemyCamlock.Velocity or Vector3.new(0, 0, 0) -- Default to zero velocity if not present
-        camera.CFrame = CFrame.new(camera.CFrame.p, enemyCamlock.Position + velocity * Camlock.Prediction)
+    if Camlock.Enabled and Camlock.Active then
+        if enemyCamlock then
+            -- Debugging: Print Camera locking information
+            print("Camlock is targeting: ", enemyCamlock.Parent.Name)
+
+            local camera = workspace.CurrentCamera
+            -- Check if Velocity exists on HumanoidRootPart before using it
+            local velocity = enemyCamlock.Velocity or Vector3.new(0, 0, 0) -- Default to zero velocity if not present
+            camera.CFrame = CFrame.new(camera.CFrame.p, enemyCamlock.Position + velocity * Camlock.Prediction)
+        else
+            print("Camlock is active but no enemy is locked.")
+        end
     end
 end)
 
@@ -44,10 +51,11 @@ end)
 local UIS = game:GetService("UserInputService")
 UIS.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end -- Prevent input if the user is typing in chat or UI
-    if input.KeyCode == Camlock.Key then
+    if input.KeyCode == Enum.KeyCode[Camlock.Key] then
         Camlock.Active = not Camlock.Active
 
         if Camlock.Active then
+            print("Camlock Activated")
             enemyCamlock = findNearestEnemy()
             if enemyCamlock then
                 if Camlock.NOTIF then
@@ -62,6 +70,7 @@ UIS.InputBegan:Connect(function(input, gameProcessed)
                 print("No valid enemy found for Camlock.")
             end
         else
+            print("Camlock Deactivated")
             enemyCamlock = nil
             if Camlock.NOTIF then
                 game.StarterGui:SetCore("SendNotification", {
@@ -74,3 +83,4 @@ UIS.InputBegan:Connect(function(input, gameProcessed)
         end
     end
 end)
+
