@@ -31,44 +31,9 @@ function Vnly_GetShakedVector3(Intensity)
     return Vector3.new(math.random(-Intensity * 1e9, Intensity * 1e9), math.random(-Intensity * 1e9, Intensity * 1e9), math.random(-Intensity * 1e9, Intensity * 1e9)) / 1e9;
 end
 
--- Perform KO, Death, and Grab Checks
-function Vnly_performChecks(Plr)
-    if Camlock.Checks.CheckKoStatus and Plr and Plr.Character then
-        local KOd = Plr.Character:WaitForChild("BodyEffects")["K.O"].Value
-        local Grabbed = Plr.Character:FindFirstChild("GRABBING_CONSTRAINT") ~= nil
-        if Plr.Character.Humanoid.Health < 1 or KOd or Grabbed then
-            enemyCamlock = nil
-            Camlock.Active = false
-            return true
-        end
-    end
-
-    if Camlock.Checks.DisableOnTargetDeath and Plr and Plr.Character:FindFirstChild("Humanoid") then
-        if Plr.Character.Humanoid.Health < 1 then
-            enemyCamlock = nil
-            Camlock.Active = false
-            return true
-        end
-    end
-
-    if Camlock.Checks.DisableOnPlayerDeath and game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
-        if game.Players.LocalPlayer.Character.Humanoid.Health < 1 then
-            enemyCamlock = nil
-            Camlock.Active = false
-            return true
-        end
-    end
-
-    return false
-end
-
 local enemyCamlock = nil
 game:GetService("RunService").RenderStepped:Connect(function()
     if Camlock.Enabled and Camlock.Active and enemyCamlock and enemyCamlock.Parent and enemyCamlock.Parent:FindFirstChild("HumanoidRootPart") then
-        if Vnly_performChecks(enemyCamlock.Parent) then
-            return
-        end
-
         local humanoidRootPart = enemyCamlock.Parent.HumanoidRootPart
         local predictedPosition = Vnly_getPredictedPosition(humanoidRootPart)
 
