@@ -1,4 +1,13 @@
----- Ensure the tool the player is holding is properly retrieved
+-- Use the globally available AutoShoot table
+local AutoShoot = _G.AutoShoot
+
+-- Default values if they aren't already set globally
+AutoShoot['Enabled'] = AutoShoot['Enabled'] or false
+AutoShoot['Key'] = AutoShoot['Key'] or Enum.KeyCode.C
+AutoShoot['Delay'] = AutoShoot['Delay'] or 0.05
+AutoShoot['NOTIF'] = AutoShoot['NOTIF'] or true
+
+-- Function to get the currently held tool
 local function getHeldTool()
     local character = game.Players.LocalPlayer.Character
     if character then
@@ -11,12 +20,12 @@ local function getHeldTool()
     return nil
 end
 
--- AutoShoot toggle logic with notification and delayed tool activation
+-- AutoShoot toggle logic
 game:GetService("UserInputService").InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
     if input.KeyCode == AutoShoot.Key then
         AutoShoot.Enabled = not AutoShoot.Enabled
-        
+
         -- Notification when toggling
         if AutoShoot.NOTIF then
             local status = AutoShoot.Enabled and "Enabled" or "Disabled"
@@ -29,17 +38,15 @@ game:GetService("UserInputService").InputBegan:Connect(function(input, gameProce
     end
 end)
 
--- Main AutoShoot logic with tool activation and precise delay
+-- Main AutoShoot logic
 task.spawn(function()
     while true do
-        task.wait(0.1)  -- Main loop to prevent overload
-
+        task.wait(0.1)  -- Main loop
         if AutoShoot.Enabled then
             local Tool = getHeldTool()  -- Check the currently held tool
-
-            if Tool and Tool:FindFirstChild("Handle") then  -- Make sure tool has a handle or necessary parts
+            if Tool then
                 Tool:Activate()  -- Activate the tool (shoots)
-                task.wait(AutoShoot.Delay)  -- Precise delay between shots (using task.wait for better timing)
+                task.wait(AutoShoot.Delay)  -- Precise delay between shots
             end
         end
     end
