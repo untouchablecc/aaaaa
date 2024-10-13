@@ -1,53 +1,32 @@
--- Use the globally available AutoShoot table
-local AutoShoot = _G.AutoShoot
+local AutoShoot = AutoShoot or {}
 
--- Default values if they aren't already set globally
-AutoShoot['Enabled'] = AutoShoot['Enabled'] or false
-AutoShoot['Key'] = AutoShoot['Key'] or Enum.KeyCode.C
-AutoShoot['Delay'] = AutoShoot['Delay'] or 0.05
-AutoShoot['NOTIF'] = AutoShoot['NOTIF'] or true
-
--- Function to get the currently held tool
-local function getHeldTool()
-    local character = game.Players.LocalPlayer.Character
-    if character then
-        for _, tool in pairs(character:GetChildren()) do
-            if tool:IsA("Tool") then
-                return tool
-            end
-        end
+function AutoShoot:Activate()
+    local Tool = game.Players.LocalPlayer.Character:FindFirstChildOfClass("Tool")
+    if Tool then
+        Tool:Activate()
     end
-    return nil
 end
 
--- AutoShoot toggle logic
+function AutoShoot:Toggle()
+    AutoShoot.Enabled = not AutoShoot.Enabled
+    if AutoShoot.NOTIF then
+        game.StarterGui:SetCore("SendNotification", {
+            Title = "AutoShoot",
+            Text = AutoShoot.Enabled and "AutoShoot Enabled" or "AutoShoot Disabled",
+            Duration = 2
+        })
+    end
+end
+
 game:GetService("UserInputService").InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
-    if input.KeyCode == AutoShoot.Key then
-        AutoShoot.Enabled = not AutoShoot.Enabled
-
-        -- Notification when toggling
-        if AutoShoot.NOTIF then
-            local status = AutoShoot.Enabled and "Enabled" or "Disabled"
-            game.StarterGui:SetCore("SendNotification", {
-                Title = "Auto Shoot",
-                Text = status,
-                Duration = 2,
-            })
-        end
+    if input.KeyCode == AutoShoot.Key and AutoShoot.Enabled then
+        AutoShoot:Activate()
     end
 end)
 
--- Main AutoShoot logic
-task.spawn(function()
-    while true do
-        task.wait(0.1)  -- Main loop
-        if AutoShoot.Enabled then
-            local Tool = getHeldTool()  -- Check the currently held tool
-            if Tool then
-                Tool:Activate()  -- Activate the tool (shoots)
-                task.wait(AutoShoot.Delay)  -- Precise delay between shots
-            end
-        end
+game:GetService("RunService").Stepped:Connect(function()
+    if AutoShoot.Enabled then
+        AutoShoot:Activate()
     end
 end)
