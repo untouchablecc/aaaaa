@@ -1,3 +1,131 @@
+function Vnly_getRainbowColor(tick)
+    local hue = tick % 1
+    return Color3.fromHSV(hue, 1, 1)
+end
+
+function Vnly_applyPulsate(dot)
+    if DotCustomization.Effects.Pulsate then
+        spawn(function()
+            while DotCustomization.Effects.Pulsate do
+                local initialSize = 1
+                local targetSize = math.random(120, 200) / 100
+                local duration = 0.1
+                local steps = 30
+
+                for i = 0, steps do
+                    local alpha = i / steps
+                    local newSize = initialSize + (targetSize - initialSize) * alpha
+                    dot.Size = UDim2.new(newSize, 0, newSize, 0)
+                    wait(duration / steps)
+                end
+
+                for i = 0, steps do
+                    local alpha = i / steps
+                    dot.Size = UDim2.new(targetSize - (targetSize - initialSize) * alpha, 0, targetSize - (targetSize - initialSize) * alpha, 0)
+                    wait(duration / steps)
+                end
+            end
+        end)
+    end
+end
+
+local SelectedPart = "HumanoidRootPart"
+local CC = game:GetService("Workspace").CurrentCamera
+local Plr
+local enabled = false
+local accommodationFactor = 0.12348
+local mouse = game.Players.LocalPlayer:GetMouse()
+local placemarker = Instance.new("Part", game.Workspace)
+
+function Vnly_makemarker(Parent, Adornee, Color, Size, Size2)
+    local e = Instance.new("BillboardGui", Parent)
+    e.Name = "PP"
+    e.Adornee = Adornee
+    e.Size = UDim2.new(Size * DotCustomization.DotSize, Size2, Size * DotCustomization.DotSize, Size2)
+    e.AlwaysOnTop = Dotlock.DOT
+
+    local a = Instance.new("Frame", e)
+    a.Size = UDim2.new(1, 0, 1, 0)
+    a.BackgroundTransparency = 1
+
+    if DotCustomization.Shape == "Circle" then
+        local uicorner = Instance.new("UICorner", a)
+        uicorner.CornerRadius = UDim.new(1, 0)
+    elseif DotCustomization.Shape == "Skull" then
+        local skull = Instance.new("ImageLabel", a)
+        skull.Image = "http://www.roblox.com/asset/?id=8850953349"
+        skull.Size = UDim2.new(1, 0, 1, 0)
+        skull.BackgroundTransparency = 1
+        return skull
+    end
+
+    local outline = Instance.new("UIStroke", a)
+    if DotCustomization.Effects.Rainbow then
+        spawn(function()
+            while DotCustomization.Effects.Rainbow do
+                outline.Color = Vnly_getRainbowColor(tick())
+                wait(0.1)
+            end
+        end)
+    else
+        outline.Color = DotCustomization.DotColor
+    end
+
+    outline.Thickness = DotCustomization.OutlineThickness
+    outline.Transparency = DotCustomization.Transparency
+
+    Vnly_applyPulsate(a)
+
+    return e
+end
+
+local data = game.Players:GetPlayers()
+function Vnly_noob(player)
+    local character
+    repeat wait() until player.Character
+    local handler = Vnly_makemarker(guimain, player.Character:WaitForChild(SelectedPart), Color3.fromRGB(68, 214, 44), 0.6, 3)
+    handler.Name = player.Name
+    player.CharacterAdded:connect(function(Char) handler.Adornee = Char:WaitForChild(SelectedPart) end)
+end
+
+for i = 1, #data do
+    if data[i] ~= game.Players.LocalPlayer then
+        Vnly_noob(data[i])
+    end
+end
+
+game.Players.PlayerAdded:connect(function(Player)
+    Vnly_noob(Player)
+end)
+
+spawn(function()
+    placemarker.Anchored = true
+    placemarker.CanCollide = false
+    if Dotlock.DOT == true then
+        placemarker.Size = Vector3.new(6, 6, 6)
+    else
+        placemarker.Size = Vector3.new(0, 0, 0)
+    end
+    placemarker.Transparency = 1
+    if Dotlock.DOT then
+        Vnly_makemarker(placemarker, placemarker, Color3.fromRGB(68, 214, 44), 0.6, 0)
+    end
+end)
+
+game.Players.LocalPlayer:GetMouse().KeyDown:Connect(function(k)
+    if k == Dotlock.Key and Dotlock.Enabled then
+        if enabled == true then
+            enabled = false
+            if Dotlock.NOTIF == true then
+                Plr = Vnly_getClosestPlayerToCursor()
+                game.StarterGui:SetCore("SendNotification", {
+                    Title = "Vnly Ware",
+                    Text = "Unlocked Dot Lock",
+                    Icon = "http://www.roblox.com/asset/?id=8850953349",
+                    Duration = 1,
+                })
+            end
+        else
 function Vnly_getClosestPlayerToCursor()
     local closestPlayer = nil
     local shortestDistance = 9999
