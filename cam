@@ -82,3 +82,57 @@ UIS.InputBegan:Connect(function(input, gameProcessed)
         end
     end
 end)
+local AutoShoot = AutoShoot or {}
+
+local lastShotTime = 0  -- To control delay between shots
+local AutoShootConnection
+
+-- Function to shoot the tool if it's equipped
+function AutoShoot:Activate()
+    local player = game.Players.LocalPlayer
+    local character = player.Character
+    if character then
+        local tool = character:FindFirstChildOfClass("Tool")  -- Find any tool the player is holding
+        if tool then
+            local currentTime = tick()
+            if currentTime - lastShotTime >= AutoShoot.Delay then  -- Delay control
+                tool:Activate()  -- Fire the tool
+                lastShotTime = currentTime
+            end
+        end
+    end
+end
+
+-- Function to toggle AutoShoot on or off
+function AutoShoot:Toggle()
+    AutoShoot.Enabled = not AutoShoot.Enabled
+
+    -- Notification for toggle status
+    if AutoShoot.NOTIF then
+        game.StarterGui:SetCore("SendNotification", {
+            Title = "AutoShoot",
+            Text = AutoShoot.Enabled and "AutoShoot Enabled" or "AutoShoot Disabled",
+            Duration = 2
+        })
+    end
+
+    if AutoShoot.Enabled then
+        -- Connect the Stepped event to constantly check if autoshoot is enabled
+        AutoShootConnection = game:GetService("RunService").Stepped:Connect(function()
+            AutoShoot:Activate()
+        end)
+    else
+        -- Disconnect the event when autoshoot is disabled
+        if AutoShootConnection then
+            AutoShootConnection:Disconnect()
+        end
+    end
+end
+
+-- Toggle AutoShoot using the defined key
+game:GetService("UserInputService").InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == AutoShoot.Key then
+        AutoShoot:Toggle()
+    end
+end)
