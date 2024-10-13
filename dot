@@ -118,6 +118,13 @@ game.Players.LocalPlayer:GetMouse().KeyDown:Connect(function(k)
             enabled = false
             Plr = nil  -- Reset target player when unlocking
             placemarker.CFrame = CFrame.new(0, 9999, 0)  -- Move the marker offscreen
+
+            -- Ensure no further firing happens (reset aim event)
+            local updateMousePosEvent = game.ReplicatedStorage:FindFirstChild("UpdateMousePosI2")
+            if updateMousePosEvent then
+                updateMousePosEvent:FireServer(Vector3.new(0, 0, 0))  -- Reset firing to a null position
+            end
+
             if Dotlock.NOTIF == true then
                 game.StarterGui:SetCore("SendNotification", {
                     Title = "Vnly Ware",
@@ -160,35 +167,4 @@ end
 
 game:GetService("RunService").Stepped:connect(function()
     if enabled and Plr and Plr.Character and Plr.Character:FindFirstChild("HumanoidRootPart") then
-        placemarker.CFrame = CFrame.new(Plr.Character.HumanoidRootPart.Position + (Plr.Character.HumanoidRootPart.Velocity * Dotlock.Prediction.accommodationFactor))
-        
-        local updateMousePosEvent = game.ReplicatedStorage:FindFirstChild("UpdateMousePosI2")
-        if updateMousePosEvent then
-            updateMousePosEvent:FireServer(placemarker.Position)
-        end
-    else
-        placemarker.CFrame = CFrame.new(0, 9999, 0)  -- Ensure the marker is far off when untoggled
-    end
-end)
-
-local mt = getrawmetatable(game)
-local old = mt.__namecall
-setreadonly(mt, false)
-mt.__namecall = newcclosure(function(...)
-    local args = {...}
-    if Dotlock.Enabled and getnamecallmethod() == "FireServer" and args[2] == "UpdateMousePosI2" then
-        args[3] = Plr and Plr.Character and Plr.Character.HumanoidRootPart.Position + (Plr.Character.HumanoidRootPart.Velocity * Dotlock.Prediction.accommodationFactor)
-        return old(unpack(args))
-    end
-    return old(...)
-end)
-
-if Dotlock.AIRSHOT then
-    Plr.Character:WaitForChild("Humanoid").StateChanged:Connect(function(old, new)
-        if new == Enum.HumanoidStateType.Freefall then
-            Dotlock.Part = "RightFoot"
-        else
-            Dotlock.Part = "LowerTorso"
-        end
-    end)
-end
+        placemarker.CFrame = CFrame.new(Plr.Character.HumanoidRootPart.Position + (Plr.Character.Humanoid
