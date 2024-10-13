@@ -135,8 +135,8 @@ game.Players.LocalPlayer:GetMouse().KeyDown:Connect(function(k)
     if k == Dotlock.Key and Dotlock.Enabled then
         if enabled == true then
             enabled = false
-            Plr = nil -- Clear the player target when unlocked
             if Dotlock.NOTIF == true then
+                Plr = getClosestPlayerToCursor()
                 game.StarterGui:SetCore("SendNotification", {
                     Title = "Vnly Ware",
                     Text = "Unlocked Dot Lock",
@@ -147,7 +147,7 @@ game.Players.LocalPlayer:GetMouse().KeyDown:Connect(function(k)
         else
             Plr = getClosestPlayerToCursor()
             enabled = true
-            if Plr and Dotlock.NOTIF == true then
+            if Dotlock.NOTIF == true then
                 game.StarterGui:SetCore("SendNotification", {
                     Title = "Vnly Ware",
                     Text = "Locked on: " .. tostring(Plr.Name), 
@@ -186,7 +186,7 @@ game:GetService("RunService").Stepped:connect(function()
             updateMousePosEvent:FireServer(placemarker.Position)
         end
     else
-        placemarker.CFrame = CFrame.new(0, 9999, 0) -- Reset placemarker when not locked
+        placemarker.CFrame = CFrame.new(0, 9999, 0)
     end
 end)
 
@@ -196,10 +196,7 @@ setreadonly(mt, false)
 mt.__namecall = newcclosure(function(...)
     local args = {...}
     if Dotlock.Enabled and getnamecallmethod() == "FireServer" and args[2] == "UpdateMousePosI2" then
-        -- Only update mouse position if there's a locked player
-        if Plr and Plr.Character and Plr.Character:FindFirstChild("HumanoidRootPart") then
-            args[3] = Plr.Character.HumanoidRootPart.Position + (Plr.Character.HumanoidRootPart.Velocity * accommodationFactor)
-        end
+        args[3] = Plr.Character.HumanoidRootPart.Position + (Plr.Character.HumanoidRootPart.Velocity * accommodationFactor)
         return old(unpack(args))
     end
     return old(...)
