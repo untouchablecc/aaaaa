@@ -1,3 +1,29 @@
+-- Ensure the table is correctly initialized
+Dotlock = Dotlock or {
+    ['Enabled'] = true,
+    ['Key'] = "x",
+    ['DOT'] = true,
+    ['AIRSHOT'] = true,
+    ['NOTIF'] = true,
+    ['Prediction'] = {
+        ['Enabled'] = true,
+        ['PredictionValue'] = 0.125,
+        ['accommodationFactor'] = 0.9  -- this is basically prediction
+    }
+}
+
+DotCustomization = DotCustomization or {
+    ['DotSize'] = 2.0,                
+    ['DotColor'] = Color3.fromRGB(0, 0, 0), 
+    ['OutlineThickness'] = 1,         
+    ['Transparency'] = 0,             
+    ['Shape'] = "Circle",             -- Circle, Square, Skull
+    ['Effects'] = {
+        ['Rainbow'] = true,            
+        ['Pulsate'] = true,           
+    },
+}
+
 -- Function to smoothly transition between rainbow colors
 function Vnly_getRainbowColor(tick)
     local hue = tick % 1
@@ -191,9 +217,9 @@ end)
 if Dotlock.AIRSHOT then
     Plr.Character:WaitForChild("Humanoid").StateChanged:Connect(function(old, new)
         if new == Enum.HumanoidStateType.Freefall then
-            Dotlock.Part = "UpperTorso"
+            Dotlock.Part = "RightFoot"
         else
-            Dotlock.Part = "HumanoidRootPart"
+            Dotlock.Part = "LowerTorso"
         end
     end)
 end
