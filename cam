@@ -22,6 +22,7 @@ function Vnly_findNearestEnemy()
 end
 
 function Vnly_getPredictedPosition(Player)
+    if not Player or not Player.Position then return Vector3.new(0, 0, 0) end -- Added safety check
     local velocity = Player.Velocity or Vector3.new(0, 0, 0)
     local predictedPosition = Player.Position + (velocity * Camlock.Prediction.Multiplier)
     return predictedPosition
@@ -46,6 +47,9 @@ game:GetService("RunService").RenderStepped:Connect(function()
         local camera = workspace.CurrentCamera
         local Main = CFrame.new(camera.CFrame.p, adjustedPosition)
         camera.CFrame = camera.CFrame:Lerp(Main, Camlock.Aimbot.CameraSmoothing, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
+    else
+        -- Optionally reset the camera when enemyCamlock is nil or inactive
+        -- camera.CFrame = CFrame.new(camera.CFrame.Position)
     end
 end)
 
@@ -70,7 +74,7 @@ UIS.InputBegan:Connect(function(input, gameProcessed)
             if Camlock.NOTIF then
                 game.StarterGui:SetCore("SendNotification", {
                     Title = "Camlock",
-                    Text = "Unlocked Camlock",
+                    Text = "Unlocked Camlock",  -- Consider changing to "No Target Locked" if enemyCamlock is nil
                     Icon = "http://www.roblox.com/asset/?id=8850953349",
                     Duration = 1,
                 })
