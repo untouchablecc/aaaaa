@@ -17,14 +17,20 @@ end
 
 game:GetService("RunService").Stepped:connect(function()
     if enabled and Plr and Plr.Character and Plr.Character:FindFirstChild("HumanoidRootPart") then
-        placemarker.CFrame = CFrame.new(Plr.Character.HumanoidRootPart.Position + (Plr.Character.HumanoidRootPart.Velocity * accommodationFactor))
+        if placemarker then
+            -- Make sure the placemarker exists and is properly set before updating CFrame
+            placemarker.CFrame = CFrame.new(Plr.Character.HumanoidRootPart.Position + (Plr.Character.HumanoidRootPart.Velocity * accommodationFactor))
         
-        local updateMousePosEvent = game.ReplicatedStorage:FindFirstChild("UpdateMousePosI2")
-        if updateMousePosEvent then
-            updateMousePosEvent:FireServer(placemarker.Position)
+            local updateMousePosEvent = game.ReplicatedStorage:FindFirstChild("UpdateMousePosI2")
+            if updateMousePosEvent then
+                updateMousePosEvent:FireServer(placemarker.Position)
+            end
         end
     else
-        placemarker.CFrame = CFrame.new(0, 9999, 0)
+        if placemarker then
+            -- Reset the placemarker if no valid player is locked on
+            placemarker.CFrame = CFrame.new(0, 9999, 0)
+        end
     end
 end)
 
