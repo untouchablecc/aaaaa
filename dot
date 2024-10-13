@@ -170,6 +170,7 @@ game:GetService("RunService").Stepped:connect(function()
     end
 end)
 
+
 local mt = getrawmetatable(game)
 local old = mt.__namecall
 setreadonly(mt, false)
