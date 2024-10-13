@@ -4,7 +4,7 @@ _G.Dotlock = _G.Dotlock or Dotlock
 _G.AutoShoot = _G.AutoShoot or AutoShoot
 
 -- Load Camlock functions
-loadstring(game:HttpGet('https://raw.githubusercontent.com/untouchablecc/aaaaa/refs/heads/main/auto'))()  
+loadstring(game:HttpGet('https://raw.githubusercontent.com/untouchablecc/aaaaa/refs/heads/main/as'))()  
 
 -- Load Dotlock functions
 loadstring(game:HttpGet('https://raw.githubusercontent.com/untouchablecc/aaaaa/refs/heads/main/dot'))()  
