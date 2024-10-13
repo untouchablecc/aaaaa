@@ -1,3 +1,70 @@
+-- =======================
+--     NoSlow Implementation
+-- =======================
+
+local UserInputService = game:GetService("UserInputService")
+local shiftHeld = false  -- Track if shift is held for sprinting
+
+if Miscellaneous.Movement.NoSlow then
+    -- Remove Slowdowns (Reload, Shooting, Etc.)
+    local function removeSlowdown(character)
+        if character and character:FindFirstChildOfClass("Humanoid") then
+            local humanoid = character:FindFirstChildOfClass("Humanoid")
+            humanoid.WalkSpeed = 16  -- Default walk speed
+            humanoid:GetPropertyChangedSignal("WalkSpeed"):Connect(function()
+                if not shiftHeld then
+                    humanoid.WalkSpeed = 16  -- Reset walk speed to default when not sprinting
+                end
+            end)
+        end
+    end
+
+    -- Apply to existing characters
+    for _, player in pairs(game.Players:GetPlayers()) do
+        if player.Character then
+            removeSlowdown(player.Character)
+        end
+    end
+
+    -- Apply to new characters as they spawn
+    game.Players.PlayerAdded:Connect(function(player)
+        player.CharacterAdded:Connect(removeSlowdown)
+    end)
+
+    -- Stop NoSlow when sprinting (Shift held)
+    UserInputService.InputBegan:Connect(function(input)
+        if input.KeyCode == Enum.KeyCode.LeftShift or input.KeyCode == Enum.KeyCode.RightShift then
+            shiftHeld = true
+        end
+    end)
+
+    -- Re-enable NoSlow when sprinting stops (Shift released)
+    UserInputService.InputEnded:Connect(function(input)
+        if input.KeyCode == Enum.KeyCode.LeftShift or input.KeyCode == Enum.KeyCode.RightShift then
+            shiftHeld = false
+        end
+    end)
+end
+
+-- =======================
+--     Hook to Prevent JumpPower Changes
+-- =======================
+
+if not game.IsLoaded(game) then 
+    game.Loaded.Wait(game.Loaded);
+end
+
+-- Hooking JumpPower changes
+local IsA = game.IsA;
+local newindex = nil 
+
+newindex = hookmetamethod(game, "__newindex", function(self, Index, Value)
+    if not checkcaller() and IsA(self, "Humanoid") and Index == "JumpPower" then 
+        return
+    end
+    
+    return newindex(self, Index, Value);
+end)
 -- Function to change the FOV
 function ChangeFOV(fovValue)
     if Miscellaneous.FOVChanger.Enabled then
