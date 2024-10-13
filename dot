@@ -131,9 +131,16 @@ game.Players.LocalPlayer:GetMouse().KeyDown:Connect(function(k)
         else
             Plr = Vnly_getClosestPlayerToCursor()
             enabled = true
+
+            -- Ensure Plr and Character are valid before proceeding
             connection = game:GetService("RunService").Stepped:Connect(function()
-                if enabled and Plr and Plr.Character and Plr.Character:FindFirstChild("HumanoidRootPart") then
-                    placemarker.CFrame = CFrame.new(Plr.Character.HumanoidRootPart.Position + (Plr.Character.HumanoidRootPart.Velocity * Dotlock.Prediction.accommodationFactor))
+                if enabled and Plr and Plr.Character and Plr.Character:FindFirstChild(Dotlock.DotHitpart) then
+                    local prediction = Vector3.new(
+                        Plr.Character.HumanoidRootPart.Velocity.X * Dotlock.Prediction.AccomodationFactorX,
+                        Plr.Character.HumanoidRootPart.Velocity.Y * Dotlock.Prediction.AccomodationFactorY,
+                        Plr.Character.HumanoidRootPart.Velocity.Z * Dotlock.Prediction.AccomodationFactorZ
+                    )
+                    placemarker.CFrame = CFrame.new(Plr.Character[Dotlock.DotHitpart].Position + prediction)
                 else
                     placemarker.CFrame = CFrame.new(0, 9999, 0)
                 end
@@ -150,11 +157,13 @@ game.Players.LocalPlayer:GetMouse().KeyDown:Connect(function(k)
     end
 end)
 
+-- Function to find the closest player
 function Vnly_getClosestPlayerToCursor()
     local closestPlayer
     local shortestDistance = 9999
 
     for i, v in pairs(game.Players:GetPlayers()) do
+        -- Ensure player is valid and their character exists before accessing properties
         if v ~= game.Players.LocalPlayer and v.Character and v.Character:FindFirstChild("Humanoid") and v.Character.Humanoid.Health > 0 and v.Character:FindFirstChild("HumanoidRootPart") then
             local pos = CC:WorldToViewportPoint(v.Character.PrimaryPart.Position)
             local magnitude = (Vector2.new(pos.X, pos.Y) - Vector2.new(mouse.X, mouse.Y)).magnitude
@@ -169,8 +178,13 @@ end
 
 -- Ensure placemarker positioning based on target
 game:GetService("RunService").Stepped:connect(function()
-    if enabled and Plr and Plr.Character and Plr.Character:FindFirstChild("HumanoidRootPart") then
-        placemarker.CFrame = CFrame.new(Plr.Character.HumanoidRootPart.Position + (Plr.Character.HumanoidRootPart.Velocity * Dotlock.Prediction.accommodationFactor))
+    if enabled and Plr and Plr.Character and Plr.Character:FindFirstChild(Dotlock.DotHitpart) then
+        local prediction = Vector3.new(
+            Plr.Character.HumanoidRootPart.Velocity.X * Dotlock.Prediction.AccomodationFactorX,
+            Plr.Character.HumanoidRootPart.Velocity.Y * Dotlock.Prediction.AccomodationFactorY,
+            Plr.Character.HumanoidRootPart.Velocity.Z * Dotlock.Prediction.AccomodationFactorZ
+        )
+        placemarker.CFrame = CFrame.new(Plr.Character[Dotlock.DotHitpart].Position + prediction)
     else
         placemarker.CFrame = CFrame.new(0, 9999, 0)
     end
@@ -182,7 +196,7 @@ setreadonly(mt, false)
 mt.__namecall = newcclosure(function(...)
     local args = {...}
     if enabled and getnamecallmethod() == "FireServer" and args[2] == "UpdateMousePosI2" then
-        args[3] = Plr.Character.HumanoidRootPart.Position + (Plr.Character.HumanoidRootPart.Velocity * Dotlock.Prediction.accommodationFactor)
+        args[3] = Plr.Character.HumanoidRootPart.Position + (Plr.Character.HumanoidRootPart.Velocity * Dotlock.Prediction.AccomodationFactorX)
         return old(unpack(args))
     end
     return old(...)
@@ -191,9 +205,9 @@ end)
 if Dotlock.AIRSHOT then
     Plr.Character:WaitForChild("Humanoid").StateChanged:Connect(function(old, new)
         if new == Enum.HumanoidStateType.Freefall then
-            Dotlock.Part = "RightFoot"
+            Dotlock.DotHitpart = Dotlock.DotAirHitpart
         else
-            Dotlock.Part = "LowerTorso"
+            Dotlock.DotHitpart = "LowerTorso"
         end
     end)
-end
+endv
