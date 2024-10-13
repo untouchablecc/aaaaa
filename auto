@@ -1,0 +1,44 @@
+-- Get the tool the player is currently holding
+local function getHeldTool()
+    local character = game.Players.LocalPlayer.Character
+    if character then
+        for _, tool in pairs(character:GetChildren()) do
+            if tool:IsA("Tool") then
+                return tool
+            end
+        end
+    end
+    return nil
+end
+
+-- Ensure AutoShoot is toggled with any tool
+game:GetService("UserInputService").InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == AutoShoot.Key then
+        AutoShoot.Enabled = not AutoShoot.Enabled
+        
+        -- Notification when toggling
+        if AutoShoot.NOTIF then
+            local status = AutoShoot.Enabled and "Enabled" or "Disabled"
+            game.StarterGui:SetCore("SendNotification", {
+                Title = "Auto Shoot",
+                Text = status,
+                Duration = 2,
+            })
+        end
+    end
+end)
+
+-- AutoShoot Logic with advanced delay
+spawn(function()
+    while true do
+        wait()  -- Main loop
+        if AutoShoot.Enabled then
+            local Tool = getHeldTool()  -- Checks the currently held tool
+            if Tool then  -- If any tool is being held
+                Tool:Activate()  -- Activates the tool (shoots)
+                wait(AutoShoot.Delay)  -- Precise delay between shots (advanced millisecond-level control)
+            end
+        end
+    end
+end)
