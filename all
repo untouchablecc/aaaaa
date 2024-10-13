@@ -1,8 +1,3 @@
--- Make sure these tables are globally available (initialize if not already)
-_G.Camlock = _G.Camlock or Camlock
-_G.Dotlock = _G.Dotlock or Dotlock
-_G.AutoShoot = _G.AutoShoot or AutoShoot
-
 -- Load Camlock functions
 loadstring(game:HttpGet('https://raw.githubusercontent.com/untouchablecc/aaaaa/refs/heads/main/as'))()  
 
