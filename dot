@@ -64,8 +64,8 @@ game.Players.LocalPlayer:GetMouse().KeyDown:Connect(function(k)
     if k == Dotlock.Key and Dotlock.Enabled then
         if enabled == true then
             enabled = false
+            Plr = nil -- Ensure that we completely reset Plr when untoggled
             if Dotlock.NOTIF == true then
-                Plr = Vnly_getClosestPlayerToCursor()
                 game.StarterGui:SetCore("SendNotification", {
                     Title = "Vnly Ware",
                     Text = "Unlocked Dot Lock",
