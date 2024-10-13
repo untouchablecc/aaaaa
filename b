@@ -1,5 +1,5 @@
 -- =======================
---     NoSlow Implementation
+--     NoSlow and JumpPower Hook Implementation
 -- =======================
 
 local UserInputService = game:GetService("UserInputService")
@@ -50,21 +50,23 @@ end
 --     Hook to Prevent JumpPower Changes
 -- =======================
 
-if not game.IsLoaded(game) then 
-    game.Loaded.Wait(game.Loaded);
-end
-
--- Hooking JumpPower changes
-local IsA = game.IsA;
-local newindex = nil 
-
-newindex = hookmetamethod(game, "__newindex", function(self, Index, Value)
-    if not checkcaller() and IsA(self, "Humanoid") and Index == "JumpPower" then 
-        return
+if Miscellaneous.Movement.NoJumpPowerChange then
+    if not game.IsLoaded(game) then 
+        game.Loaded:Wait()
     end
-    
-    return newindex(self, Index, Value);
-end)
+
+    -- Hooking JumpPower changes
+    local IsA = game.IsA;
+    local newindex = nil 
+
+    newindex = hookmetamethod(game, "__newindex", function(self, Index, Value)
+        if not checkcaller() and IsA(self, "Humanoid") and Index == "JumpPower" then 
+            return
+        end
+        
+        return newindex(self, Index, Value);
+    end)
+end
 -- Function to change the FOV
 function ChangeFOV(fovValue)
     if Miscellaneous.FOVChanger.Enabled then
