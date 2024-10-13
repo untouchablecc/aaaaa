@@ -116,8 +116,8 @@ game.Players.LocalPlayer:GetMouse().KeyDown:Connect(function(k)
     if k == Dotlock.Key and Dotlock.Enabled then
         if enabled == true then
             enabled = false
+            placemarker.Transparency = 1 -- Hide placemarker on unlock
             if Dotlock.NOTIF == true then
-                Plr = Vnly_getClosestPlayerToCursor()
                 game.StarterGui:SetCore("SendNotification", {
                     Title = "Vnly Ware",
                     Text = "Unlocked Dot Lock",
@@ -127,14 +127,17 @@ game.Players.LocalPlayer:GetMouse().KeyDown:Connect(function(k)
             end
         else
             Plr = Vnly_getClosestPlayerToCursor()
-            enabled = true
-            if Dotlock.NOTIF == true then
-                game.StarterGui:SetCore("SendNotification", {
-                    Title = "Vnly Ware",
-                    Text = "Locked on: " .. tostring(Plr.Name),
-                    Icon = "http://www.roblox.com/asset/?id=8850953349",
-                    Duration = 1,
-                })
+            if Plr then
+                enabled = true
+                placemarker.Transparency = 0 -- Show placemarker when locked
+                if Dotlock.NOTIF == true then
+                    game.StarterGui:SetCore("SendNotification", {
+                        Title = "Vnly Ware",
+                        Text = "Locked on: " .. tostring(Plr.Name),
+                        Icon = "http://www.roblox.com/asset/?id=8850953349",
+                        Duration = 1,
+                    })
+                end
             end
         end
     end
@@ -160,7 +163,7 @@ end
 game:GetService("RunService").Stepped:connect(function()
     if enabled and Plr and Plr.Character and Plr.Character:FindFirstChild("HumanoidRootPart") then
         placemarker.CFrame = CFrame.new(Plr.Character.HumanoidRootPart.Position + (Plr.Character.HumanoidRootPart.Velocity * Dotlock.Prediction.accommodationFactor))
-        
+
         local updateMousePosEvent = game.ReplicatedStorage:FindFirstChild("UpdateMousePosI2")
         if updateMousePosEvent then
             updateMousePosEvent:FireServer(placemarker.Position)
@@ -170,20 +173,21 @@ game:GetService("RunService").Stepped:connect(function()
     end
 end)
 
-
 local mt = getrawmetatable(game)
 local old = mt.__namecall
 setreadonly(mt, false)
 mt.__namecall = newcclosure(function(...)
     local args = {...}
     if Dotlock.Enabled and getnamecallmethod() == "FireServer" and args[2] == "UpdateMousePosI2" then
-        args[3] = Plr.Character.HumanoidRootPart.Position + (Plr.Character.HumanoidRootPart.Velocity * Dotlock.Prediction.accommodationFactor)
+        if Plr and Plr.Character and Plr.Character:FindFirstChild("HumanoidRootPart") then
+            args[3] = Plr.Character.HumanoidRootPart.Position + (Plr.Character.HumanoidRootPart.Velocity * Dotlock.Prediction.accommodationFactor)
+        end
         return old(unpack(args))
     end
     return old(...)
 end)
 
-if Dotlock.AIRSHOT then
+if Dotlock.AIRSHOT and Plr then
     Plr.Character:WaitForChild("Humanoid").StateChanged:Connect(function(old, new)
         if new == Enum.HumanoidStateType.Freefall then
             Dotlock.Part = "RightFoot"
