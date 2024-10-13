@@ -1,13 +1,12 @@
--- Function to find the nearest enemy for Camlock
-function findNearestEnemy()
+function Vnly_findNearestEnemy()
     local ClosestDistance, ClosestPlayer = math.huge, nil
     local CenterPosition = Vector2.new(game:GetService("GuiService"):GetScreenResolution().X / 2, game:GetService("GuiService"):GetScreenResolution().Y / 2)
 
     for _, Player in ipairs(game:GetService("Players"):GetPlayers()) do
         if Player ~= game.Players.LocalPlayer then
             local Character = Player.Character
-            if Character and Character:FindFirstChild("HumanoidRootPart") and Character.Humanoid.Health > 0 then
-                local Position, IsVisibleOnViewport = game:GetService("Workspace").CurrentCamera:WorldToViewportPoint(Character.HumanoidRootPart.Position)
+            if Character and Character:FindFirstChild("HumanoidRootPart") and Character:FindFirstChild("Humanoid") and Character.Humanoid.Health > 0 then
+                local Position, IsVisibleOnViewport = workspace.CurrentCamera:WorldToViewportPoint(Character.HumanoidRootPart.Position)
                 if IsVisibleOnViewport then
                     local Distance = (CenterPosition - Vector2.new(Position.X, Position.Y)).Magnitude
                     if Distance < ClosestDistance then
@@ -22,27 +21,42 @@ function findNearestEnemy()
     return ClosestPlayer
 end
 
--- Main RunService loop for Camlock functionality
+function Vnly_getPredictedPosition(Player)
+    local velocity = Player.Velocity or Vector3.new(0, 0, 0)
+    local predictedPosition = Player.Position + (velocity * Camlock.Prediction.Multiplier)
+    return predictedPosition
+end
+
+function Vnly_GetShakedVector3(Intensity)
+    return Vector3.new(math.random(-Intensity * 1e9, Intensity * 1e9), math.random(-Intensity * 1e9, Intensity * 1e9), math.random(-Intensity * 1e9, Intensity * 1e9)) / 1e9;
+end
+
 local enemyCamlock = nil
-game:GetService("RunService").Heartbeat:Connect(function()
-    if Camlock.Enabled and Camlock.Active then
-        if enemyCamlock then
-            local camera = workspace.CurrentCamera
-            local velocity = enemyCamlock.Velocity or Vector3.new(0, 0, 0) -- Default to zero velocity if not present
-            camera.CFrame = CFrame.new(camera.CFrame.p, enemyCamlock.Position + velocity * Camlock.Prediction)
-        end
+game:GetService("RunService").RenderStepped:Connect(function()
+    if Camlock.Enabled and Camlock.Active and enemyCamlock and enemyCamlock.Parent and enemyCamlock.Parent:FindFirstChild("HumanoidRootPart") then
+        local humanoidRootPart = enemyCamlock.Parent.HumanoidRootPart
+        local predictedPosition = Vnly_getPredictedPosition(humanoidRootPart)
+
+        local adjustedPosition = predictedPosition + Vector3.new(
+            Camlock.Prediction.XOffset,
+            Camlock.Prediction.YOffset,
+            Camlock.Prediction.ZOffset
+        ) + Vnly_GetShakedVector3(Camlock.Shake.Intensity)
+
+        local camera = workspace.CurrentCamera
+        local Main = CFrame.new(camera.CFrame.p, adjustedPosition)
+        camera.CFrame = camera.CFrame:Lerp(Main, Camlock.Aimbot.CameraSmoothing, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
     end
 end)
 
--- Toggling Camlock using UserInputService for reliable key detection
 local UIS = game:GetService("UserInputService")
 UIS.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end -- Prevent input if the user is typing in chat or UI
+    if gameProcessed then return end
     if input.KeyCode == Camlock.Key then
         Camlock.Active = not Camlock.Active
 
         if Camlock.Active then
-            enemyCamlock = findNearestEnemy()
+            enemyCamlock = Vnly_findNearestEnemy()
             if enemyCamlock and Camlock.NOTIF then
                 game.StarterGui:SetCore("SendNotification", {
                     Title = "Camlock",
