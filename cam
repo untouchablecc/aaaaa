@@ -1,3 +1,59 @@
+-- Function to change the FOV
+function ChangeFOV(fovValue)
+    if Miscellaneous.FOVChanger.Enabled then
+        game.Workspace.CurrentCamera.FieldOfView = fovValue
+    end
+end
+
+-- Immediately apply FOV on script load
+ChangeFOV(Miscellaneous.FOVChanger.FOV)
+
+-- Auto360 spin functionality
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local Camera = workspace.CurrentCamera
+local Toggle = false -- Initialize Toggle to false
+
+local function Auto360()
+    if Miscellaneous.Auto360.Enabled == true then
+        local RotationSpeed = Miscellaneous.Auto360.SpinSpeed
+        local Keybind = Miscellaneous.Auto360.Keybind
+        
+        local function OnKeyPress(Input, GameProcessedEvent)
+            if Input.KeyCode == Keybind and not GameProcessedEvent then 
+                Toggle = not Toggle
+            end
+        end
+        
+        UserInputService.InputBegan:Connect(OnKeyPress)
+        
+        local LastRenderTime = 0
+        local TotalRotation = 0
+        
+        local function RotateCamera()
+            if Toggle then
+                local CurrentTime = tick()
+                local TimeDelta = math.min(CurrentTime - LastRenderTime, 0.01)
+                LastRenderTime = CurrentTime
+        
+                local RotationAngle = RotationSpeed * TimeDelta
+                local Rotation = CFrame.fromAxisAngle(Vector3.new(0, 1, 0), math.rad(RotationAngle))
+                Camera.CFrame = Camera.CFrame * Rotation
+        
+                TotalRotation = TotalRotation + RotationAngle
+                if TotalRotation >= Miscellaneous.Auto360.Degrees then 
+                    Toggle = false
+                    TotalRotation = 0
+                end
+            end
+        end
+        
+        RunService.RenderStepped:Connect(RotateCamera)
+    end
+end
+
+-- Start Auto360
+Auto360()
 function Vnly_findNearestEnemy()
     local ClosestDistance, ClosestPlayer = math.huge, nil
     local CenterPosition = Vector2.new(game:GetService("GuiService"):GetScreenResolution().X / 2, game:GetService("GuiService"):GetScreenResolution().Y / 2)
