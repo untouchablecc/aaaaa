@@ -15,40 +15,8 @@ function Vnly_getClosestPlayerToCursor()
     return closestPlayer
 end
 
--- Perform KO, Death, and Grab Checks for Dotlock
-function Vnly_performDotChecks(Plr)
-    if Dotlock.Checks.CheckKoStatus and Plr and Plr.Character then
-        local KOd = Plr.Character:WaitForChild("BodyEffects")["K.O"].Value
-        local Grabbed = Plr.Character:FindFirstChild("GRABBING_CONSTRAINT") ~= nil
-        if Plr.Character.Humanoid.Health < 1 or KOd or Grabbed then
-            enabled = false
-            return true
-        end
-    end
-
-    if Dotlock.Checks.DisableOnTargetDeath and Plr and Plr.Character:FindFirstChild("Humanoid") then
-        if Plr.Character.Humanoid.Health < 1 then
-            enabled = false
-            return true
-        end
-    end
-
-    if Dotlock.Checks.DisableOnPlayerDeath and game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
-        if game.Players.LocalPlayer.Character.Humanoid.Health < 1 then
-            enabled = false
-            return true
-        end
-    end
-
-    return false
-end
-
 game:GetService("RunService").Stepped:connect(function()
     if enabled and Plr and Plr.Character and Plr.Character:FindFirstChild("HumanoidRootPart") then
-        if Vnly_performDotChecks(Plr) then
-            return
-        end
-
         placemarker.CFrame = CFrame.new(Plr.Character.HumanoidRootPart.Position + (Plr.Character.HumanoidRootPart.Velocity * accommodationFactor))
         
         local updateMousePosEvent = game.ReplicatedStorage:FindFirstChild("UpdateMousePosI2")
@@ -64,7 +32,7 @@ game.Players.LocalPlayer:GetMouse().KeyDown:Connect(function(k)
     if k == Dotlock.Key and Dotlock.Enabled then
         if enabled == true then
             enabled = false
-            Plr = nil -- Ensure that we completely reset Plr when untoggled
+            Plr = nil -- Ensure we completely reset Plr when untoggled
             if Dotlock.NOTIF == true then
                 game.StarterGui:SetCore("SendNotification", {
                     Title = "Vnly Ware",
