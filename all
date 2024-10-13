@@ -1,1 +1,2 @@
-
+loadstring(game:HttpGet('https://raw.githubusercontent.com/untouchablecc/aaaaa/refs/heads/main/cam'))()  -- For Camlock functions
+loadstring(game:HttpGet('https://raw.githubusercontent.com/untouchablecc/aaaaa/refs/heads/main/dot'))()  -- For Dotlock functions
