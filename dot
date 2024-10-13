@@ -1,114 +1,62 @@
-function Vnly_getRainbowColor(tick)
-    local hue = tick % 1
-    return Color3.fromHSV(hue, 1, 1)
-end
+function Vnly_getClosestPlayerToCursor()
+    local closestPlayer
+    local shortestDistance = 9999
 
-function Vnly_applyPulsate(dot)
-    if DotCustomization.Effects.Pulsate then
-        spawn(function()
-            while DotCustomization.Effects.Pulsate do
-                local initialSize = 1
-                local targetSize = math.random(120, 200) / 100
-                local duration = 0.1
-                local steps = 30
-
-                for i = 0, steps do
-                    local alpha = i / steps
-                    local newSize = initialSize + (targetSize - initialSize) * alpha
-                    dot.Size = UDim2.new(newSize, 0, newSize, 0)
-                    wait(duration / steps)
-                end
-
-                for i = 0, steps do
-                    local alpha = i / steps
-                    dot.Size = UDim2.new(targetSize - (targetSize - initialSize) * alpha, 0, targetSize - (targetSize - initialSize) * alpha, 0)
-                    wait(duration / steps)
-                end
+    for i, v in pairs(game.Players:GetPlayers()) do
+        if v ~= game.Players.LocalPlayer and v.Character and v.Character:FindFirstChild("Humanoid") and v.Character.Humanoid.Health > 0 and v.Character:FindFirstChild("HumanoidRootPart") then
+            local pos = CC:WorldToViewportPoint(v.Character.PrimaryPart.Position)
+            local magnitude = (Vector2.new(pos.X, pos.Y) - Vector2.new(mouse.X, mouse.Y)).magnitude
+            if magnitude < shortestDistance then
+                closestPlayer = v
+                shortestDistance = magnitude
             end
-        end)
+        end
     end
+    return closestPlayer
 end
 
-local SelectedPart = "HumanoidRootPart"
-local CC = game:GetService("Workspace").CurrentCamera
-local Plr
-local enabled = false
-local accommodationFactor = 0.12348
-local mouse = game.Players.LocalPlayer:GetMouse()
-local placemarker = Instance.new("Part", game.Workspace)
-
-function Vnly_makemarker(Parent, Adornee, Color, Size, Size2)
-    local e = Instance.new("BillboardGui", Parent)
-    e.Name = "PP"
-    e.Adornee = Adornee
-    e.Size = UDim2.new(Size * DotCustomization.DotSize, Size2, Size * DotCustomization.DotSize, Size2)
-    e.AlwaysOnTop = Dotlock.DOT
-
-    local a = Instance.new("Frame", e)
-    a.Size = UDim2.new(1, 0, 1, 0)
-    a.BackgroundTransparency = 1
-
-    if DotCustomization.Shape == "Circle" then
-        local uicorner = Instance.new("UICorner", a)
-        uicorner.CornerRadius = UDim.new(1, 0)
-    elseif DotCustomization.Shape == "Skull" then
-        local skull = Instance.new("ImageLabel", a)
-        skull.Image = "http://www.roblox.com/asset/?id=8850953349"
-        skull.Size = UDim2.new(1, 0, 1, 0)
-        skull.BackgroundTransparency = 1
-        return skull
+-- Perform KO, Death, and Grab Checks for Dotlock
+function Vnly_performDotChecks(Plr)
+    if Dotlock.Checks.CheckKoStatus and Plr and Plr.Character then
+        local KOd = Plr.Character:WaitForChild("BodyEffects")["K.O"].Value
+        local Grabbed = Plr.Character:FindFirstChild("GRABBING_CONSTRAINT") ~= nil
+        if Plr.Character.Humanoid.Health < 1 or KOd or Grabbed then
+            enabled = false
+            return true
+        end
     end
 
-    local outline = Instance.new("UIStroke", a)
-    if DotCustomization.Effects.Rainbow then
-        spawn(function()
-            while DotCustomization.Effects.Rainbow do
-                outline.Color = Vnly_getRainbowColor(tick())
-                wait(0.1)
-            end
-        end)
+    if Dotlock.Checks.DisableOnTargetDeath and Plr and Plr.Character:FindFirstChild("Humanoid") then
+        if Plr.Character.Humanoid.Health < 1 then
+            enabled = false
+            return true
+        end
+    end
+
+    if Dotlock.Checks.DisableOnPlayerDeath and game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
+        if game.Players.LocalPlayer.Character.Humanoid.Health < 1 then
+            enabled = false
+            return true
+        end
+    end
+
+    return false
+end
+
+game:GetService("RunService").Stepped:connect(function()
+    if enabled and Plr and Plr.Character and Plr.Character:FindFirstChild("HumanoidRootPart") then
+        if Vnly_performDotChecks(Plr) then
+            return
+        end
+
+        placemarker.CFrame = CFrame.new(Plr.Character.HumanoidRootPart.Position + (Plr.Character.HumanoidRootPart.Velocity * accommodationFactor))
+        
+        local updateMousePosEvent = game.ReplicatedStorage:FindFirstChild("UpdateMousePosI2")
+        if updateMousePosEvent then
+            updateMousePosEvent:FireServer(placemarker.Position)
+        end
     else
-        outline.Color = DotCustomization.DotColor
-    end
-
-    outline.Thickness = DotCustomization.OutlineThickness
-    outline.Transparency = DotCustomization.Transparency
-
-    Vnly_applyPulsate(a)
-
-    return e
-end
-
-local data = game.Players:GetPlayers()
-function Vnly_noob(player)
-    local character
-    repeat wait() until player.Character
-    local handler = Vnly_makemarker(guimain, player.Character:WaitForChild(SelectedPart), Color3.fromRGB(68, 214, 44), 0.6, 3)
-    handler.Name = player.Name
-    player.CharacterAdded:connect(function(Char) handler.Adornee = Char:WaitForChild(SelectedPart) end)
-end
-
-for i = 1, #data do
-    if data[i] ~= game.Players.LocalPlayer then
-        Vnly_noob(data[i])
-    end
-end
-
-game.Players.PlayerAdded:connect(function(Player)
-    Vnly_noob(Player)
-end)
-
-spawn(function()
-    placemarker.Anchored = true
-    placemarker.CanCollide = false
-    if Dotlock.DOT == true then
-        placemarker.Size = Vector3.new(6, 6, 6)
-    else
-        placemarker.Size = Vector3.new(0, 0, 0)
-    end
-    placemarker.Transparency = 1
-    if Dotlock.DOT then
-        Vnly_makemarker(placemarker, placemarker, Color3.fromRGB(68, 214, 44), 0.6, 0)
+        placemarker.CFrame = CFrame.new(0, 9999, 0)
     end
 end)
 
@@ -139,55 +87,3 @@ game.Players.LocalPlayer:GetMouse().KeyDown:Connect(function(k)
         end
     end
 end)
-
-function Vnly_getClosestPlayerToCursor()
-    local closestPlayer
-    local shortestDistance = 9999
-
-    for i, v in pairs(game.Players:GetPlayers()) do
-        if v ~= game.Players.LocalPlayer and v.Character and v.Character:FindFirstChild("Humanoid") and v.Character.Humanoid.Health > 0 and v.Character:FindFirstChild("HumanoidRootPart") then
-            local pos = CC:WorldToViewportPoint(v.Character.PrimaryPart.Position)
-            local magnitude = (Vector2.new(pos.X, pos.Y) - Vector2.new(mouse.X, mouse.Y)).magnitude
-            if magnitude < shortestDistance then
-                closestPlayer = v
-                shortestDistance = magnitude
-            end
-        end
-    end
-    return closestPlayer
-end
-
-game:GetService("RunService").Stepped:connect(function()
-    if enabled and Plr and Plr.Character and Plr.Character:FindFirstChild("HumanoidRootPart") then
-        placemarker.CFrame = CFrame.new(Plr.Character.HumanoidRootPart.Position + (Plr.Character.HumanoidRootPart.Velocity * accommodationFactor))
-        
-        local updateMousePosEvent = game.ReplicatedStorage:FindFirstChild("UpdateMousePosI2")
-        if updateMousePosEvent then
-            updateMousePosEvent:FireServer(placemarker.Position)
-        end
-    else
-        placemarker.CFrame = CFrame.new(0, 9999, 0)
-    end
-end)
-
-local mt = getrawmetatable(game)
-local old = mt.__namecall
-setreadonly(mt, false)
-mt.__namecall = newcclosure(function(...)
-    local args = {...}
-    if Dotlock.Enabled and getnamecallmethod() == "FireServer" and args[2] == "UpdateMousePosI2" then
-        args[3] = Plr.Character.HumanoidRootPart.Position + (Plr.Character.HumanoidRootPart.Velocity * accommodationFactor)
-        return old(unpack(args))
-    end
-    return old(...)
-end)
-
-if Dotlock.AIRSHOT then
-    Plr.Character:WaitForChild("Humanoid").StateChanged:Connect(function(old, new)
-        if new == Enum.HumanoidStateType.Freefall then
-            Dotlock.Part = "RightFoot"
-        else
-            Dotlock.Part = "LowerTorso"
-        end
-    end)
-end
