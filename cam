@@ -82,57 +82,59 @@ UIS.InputBegan:Connect(function(input, gameProcessed)
         end
     end
 end)
-local AutoShoot = AutoShoot or {}
+local holding = false
+local autoShootActive = false
 
-local lastShotTime = 0  -- To control delay between shots
-local AutoShootConnection
+local function autoShoot()
+    while autoShootActive do
+        local Tool = utility:getHeld()  -- Replace with your tool detection logic
+        if Tool then
+            Tool:Activate()
+        end
+        wait(AutoShoot.Delay)
+    end
+end
 
--- Function to shoot the tool if it's equipped
-function AutoShoot:Activate()
-    local player = game.Players.LocalPlayer
-    local character = player.Character
-    if character then
-        local tool = character:FindFirstChildOfClass("Tool")  -- Find any tool the player is holding
-        if tool then
-            local currentTime = tick()
-            if currentTime - lastShotTime >= AutoShoot.Delay then  -- Delay control
-                tool:Activate()  -- Fire the tool
-                lastShotTime = currentTime
-            end
+-- Function to handle both Toggle and Hold mode
+local function handleAutoShoot()
+    if AutoShoot.Mode == "Toggle" then
+        autoShootActive = not autoShootActive  -- Toggle on/off
+        if AutoShoot.NOTIF then
+            game.StarterGui:SetCore("SendNotification", {
+                Title = "AutoShoot",
+                Text = autoShootActive and "Enabled" or "Disabled",
+                Duration = 2
+            })
+        end
+        if autoShootActive then
+            spawn(autoShoot)  -- Start shooting
+        end
+    elseif AutoShoot.Mode == "Hold" then
+        if holding then
+            autoShootActive = true
+            spawn(autoShoot)  -- Start shooting when holding the key
+        else
+            autoShootActive = false  -- Stop shooting when the key is released
         end
     end
 end
 
--- Function to toggle AutoShoot on or off
-function AutoShoot:Toggle()
-    AutoShoot.Enabled = not AutoShoot.Enabled
-
-    -- Notification for toggle status
-    if AutoShoot.NOTIF then
-        game.StarterGui:SetCore("SendNotification", {
-            Title = "AutoShoot",
-            Text = AutoShoot.Enabled and "AutoShoot Enabled" or "AutoShoot Disabled",
-            Duration = 2
-        })
-    end
-
-    if AutoShoot.Enabled then
-        -- Connect the Stepped event to constantly check if autoshoot is enabled
-        AutoShootConnection = game:GetService("RunService").Stepped:Connect(function()
-            AutoShoot:Activate()
-        end)
-    else
-        -- Disconnect the event when autoshoot is disabled
-        if AutoShootConnection then
-            AutoShootConnection:Disconnect()
+-- Handling Key Press for AutoShoot
+game.Players.LocalPlayer:GetMouse().KeyDown:Connect(function(k)
+    if k == AutoShoot.Key.Name then  -- Match the keybind in the table
+        if AutoShoot.Mode == "Hold" then
+            holding = true
+            handleAutoShoot()
+        elseif AutoShoot.Mode == "Toggle" then
+            handleAutoShoot()  -- Toggle mode
         end
     end
-end
+end)
 
--- Toggle AutoShoot using the defined key
-game:GetService("UserInputService").InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
-    if input.KeyCode == AutoShoot.Key then
-        AutoShoot:Toggle()
+-- Handling Key Release for Hold mode
+game.Players.LocalPlayer:GetMouse().KeyUp:Connect(function(k)
+    if k == AutoShoot.Key.Name and AutoShoot.Mode == "Hold" then
+        holding = false
+        handleAutoShoot()
     end
 end)
