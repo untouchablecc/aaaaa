@@ -32,10 +32,11 @@ end
 
 local SelectedPart = "HumanoidRootPart"
 local CC = game:GetService("Workspace").CurrentCamera
-local Plr = nil
+local Plr
 local enabled = false
 local mouse = game.Players.LocalPlayer:GetMouse()
 local placemarker = Instance.new("Part", game.Workspace)
+local connection -- For Stepped event
 
 function Vnly_makemarker(Parent, Adornee, Color, Size, Size2)
     local e = Instance.new("BillboardGui", Parent)
@@ -112,19 +113,13 @@ spawn(function()
     end
 end)
 
+-- Handle key toggling and disconnecting event
 game.Players.LocalPlayer:GetMouse().KeyDown:Connect(function(k)
     if k == Dotlock.Key and Dotlock.Enabled then
         if enabled == true then
             enabled = false
-            Plr = nil  -- Reset the target player when untoggled
-            placemarker.CFrame = CFrame.new(0, 9999, 0)  -- Move the marker offscreen
-            
-            -- Ensure the firing stops
-            local updateMousePosEvent = game.ReplicatedStorage:FindFirstChild("UpdateMousePosI2")
-            if updateMousePosEvent then
-                updateMousePosEvent:FireServer(Vector3.new(0, 0, 0))  -- Send null position to stop firing
-            end
-            
+            if connection then connection:Disconnect() end -- Disconnect the event on untoggle
+            Plr = nil -- Clear player on untoggle
             if Dotlock.NOTIF == true then
                 game.StarterGui:SetCore("SendNotification", {
                     Title = "Vnly Ware",
@@ -136,6 +131,13 @@ game.Players.LocalPlayer:GetMouse().KeyDown:Connect(function(k)
         else
             Plr = Vnly_getClosestPlayerToCursor()
             enabled = true
+            connection = game:GetService("RunService").Stepped:Connect(function()
+                if enabled and Plr and Plr.Character and Plr.Character:FindFirstChild("HumanoidRootPart") then
+                    placemarker.CFrame = CFrame.new(Plr.Character.HumanoidRootPart.Position + (Plr.Character.HumanoidRootPart.Velocity * Dotlock.Prediction.accommodationFactor))
+                else
+                    placemarker.CFrame = CFrame.new(0, 9999, 0)
+                end
+            end)
             if Dotlock.NOTIF == true then
                 game.StarterGui:SetCore("SendNotification", {
                     Title = "Vnly Ware",
@@ -165,16 +167,12 @@ function Vnly_getClosestPlayerToCursor()
     return closestPlayer
 end
 
+-- Ensure placemarker positioning based on target
 game:GetService("RunService").Stepped:connect(function()
     if enabled and Plr and Plr.Character and Plr.Character:FindFirstChild("HumanoidRootPart") then
         placemarker.CFrame = CFrame.new(Plr.Character.HumanoidRootPart.Position + (Plr.Character.HumanoidRootPart.Velocity * Dotlock.Prediction.accommodationFactor))
-        
-        local updateMousePosEvent = game.ReplicatedStorage:FindFirstChild("UpdateMousePosI2")
-        if updateMousePosEvent then
-            updateMousePosEvent:FireServer(placemarker.Position)
-        end
     else
-        placemarker.CFrame = CFrame.new(0, 9999, 0)  -- Move the marker offscreen
+        placemarker.CFrame = CFrame.new(0, 9999, 0)
     end
 end)
 
@@ -183,12 +181,8 @@ local old = mt.__namecall
 setreadonly(mt, false)
 mt.__namecall = newcclosure(function(...)
     local args = {...}
-    if Dotlock.Enabled and getnamecallmethod() == "FireServer" and args[2] == "UpdateMousePosI2" then
-        if Plr and Plr.Character and Plr.Character:FindFirstChild("HumanoidRootPart") then
-            args[3] = Plr.Character.HumanoidRootPart.Position + (Plr.Character.HumanoidRootPart.Velocity * Dotlock.Prediction.accommodationFactor)
-        else
-            args[3] = Vector3.new(0, 0, 0)  -- Stop firing by sending null position when untoggled
-        end
+    if enabled and getnamecallmethod() == "FireServer" and args[2] == "UpdateMousePosI2" then
+        args[3] = Plr.Character.HumanoidRootPart.Position + (Plr.Character.HumanoidRootPart.Velocity * Dotlock.Prediction.accommodationFactor)
         return old(unpack(args))
     end
     return old(...)
@@ -197,9 +191,9 @@ end)
 if Dotlock.AIRSHOT then
     Plr.Character:WaitForChild("Humanoid").StateChanged:Connect(function(old, new)
         if new == Enum.HumanoidStateType.Freefall then
-            Dotlock.Part = "RightFoot"
+            Dotlock.Part = "UpperTorso"
         else
-            Dotlock.Part = "LowerTorso"
+            Dotlock.Part = "HumanoidRootPart"
         end
     end)
 end
