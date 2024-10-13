@@ -131,13 +131,11 @@ spawn(function()
     end
 end)
 
--- Dotlock Toggle and Notification Logic
 game.Players.LocalPlayer:GetMouse().KeyDown:Connect(function(k)
     if k == Dotlock.Key and Dotlock.Enabled then
         if enabled == true then
             enabled = false
-            -- Clear the locked player and stop updates
-            Plr = nil
+            Plr = nil -- Clear the player target when unlocked
             if Dotlock.NOTIF == true then
                 game.StarterGui:SetCore("SendNotification", {
                     Title = "Vnly Ware",
@@ -161,7 +159,6 @@ game.Players.LocalPlayer:GetMouse().KeyDown:Connect(function(k)
     end
 end)
 
--- Function to get closest player to cursor
 function getClosestPlayerToCursor()
     local closestPlayer
     local shortestDistance = 9999  -- High initial value for shortest distance
@@ -208,9 +205,8 @@ mt.__namecall = newcclosure(function(...)
     return old(...)
 end)
 
--- Airshot Logic
 if Dotlock.AIRSHOT then
-    Plr.Character:WaitForChild("Humanoid").StateChanged:Connect(function(old, new)
+    Plr.Character:WaitForChild("Humanoid").StateChanged:Connect(function(old,new)
         if new == Enum.HumanoidStateType.Freefall then
             Dotlock.Part = "RightFoot"
         else
