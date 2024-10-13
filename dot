@@ -167,7 +167,7 @@ end
 -- Dotlock RunService functionality
 game:GetService("RunService").Stepped:connect(function()
     if enabled and Plr and Plr.Character and Plr.Character:FindFirstChild("HumanoidRootPart") then
-        -- Check if accommodationFactor is set, otherwise use a default value
+        -- Use the accommodationFactor from the table, with fallback if not set
         local accommodationFactor = Dotlock.Prediction.accommodationFactor or 0.12348
 
         placemarker.CFrame = CFrame.new(Plr.Character.HumanoidRootPart.Position + (Plr.Character.HumanoidRootPart.Velocity * accommodationFactor))
