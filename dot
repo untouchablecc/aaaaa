@@ -4,7 +4,6 @@ function Vnly_getRainbowColor(tick)
     return Color3.fromHSV(hue, 1, 1)
 end
 
--- Function to apply the pulsating effect to the dot
 function Vnly_applyPulsate(dot)
     if DotCustomization.Effects.Pulsate then
         spawn(function()
@@ -31,7 +30,6 @@ function Vnly_applyPulsate(dot)
     end
 end
 
--- Setup basic variables
 local SelectedPart = "HumanoidRootPart"
 local CC = game:GetService("Workspace").CurrentCamera
 local Plr
@@ -39,7 +37,6 @@ local enabled = false
 local mouse = game.Players.LocalPlayer:GetMouse()
 local placemarker = Instance.new("Part", game.Workspace)
 
--- Function to create a marker for the player or placemarker
 function Vnly_makemarker(Parent, Adornee, Color, Size, Size2)
     local e = Instance.new("BillboardGui", Parent)
     e.Name = "PP"
@@ -82,7 +79,6 @@ function Vnly_makemarker(Parent, Adornee, Color, Size, Size2)
     return e
 end
 
--- Apply markers for all players in the game
 local data = game.Players:GetPlayers()
 function Vnly_noob(player)
     local character
@@ -102,7 +98,6 @@ game.Players.PlayerAdded:connect(function(Player)
     Vnly_noob(Player)
 end)
 
--- Spawn placemarker
 spawn(function()
     placemarker.Anchored = true
     placemarker.CanCollide = false
@@ -117,7 +112,6 @@ spawn(function()
     end
 end)
 
--- Dotlock key toggling
 game.Players.LocalPlayer:GetMouse().KeyDown:Connect(function(k)
     if k == Dotlock.Key and Dotlock.Enabled then
         if enabled == true then
@@ -146,7 +140,6 @@ game.Players.LocalPlayer:GetMouse().KeyDown:Connect(function(k)
     end
 end)
 
--- Find closest player to cursor
 function Vnly_getClosestPlayerToCursor()
     local closestPlayer
     local shortestDistance = 9999
@@ -164,14 +157,10 @@ function Vnly_getClosestPlayerToCursor()
     return closestPlayer
 end
 
--- Dotlock RunService functionality
 game:GetService("RunService").Stepped:connect(function()
     if enabled and Plr and Plr.Character and Plr.Character:FindFirstChild("HumanoidRootPart") then
-        -- Use the accommodationFactor from the table, with fallback if not set
-        local accommodationFactor = Dotlock.Prediction.accommodationFactor or 0.12348
-
-        placemarker.CFrame = CFrame.new(Plr.Character.HumanoidRootPart.Position + (Plr.Character.HumanoidRootPart.Velocity * accommodationFactor))
-
+        placemarker.CFrame = CFrame.new(Plr.Character.HumanoidRootPart.Position + (Plr.Character.HumanoidRootPart.Velocity * Dotlock.Prediction.accommodationFactor))
+        
         local updateMousePosEvent = game.ReplicatedStorage:FindFirstChild("UpdateMousePosI2")
         if updateMousePosEvent then
             updateMousePosEvent:FireServer(placemarker.Position)
@@ -181,22 +170,18 @@ game:GetService("RunService").Stepped:connect(function()
     end
 end)
 
--- Hook into the game's remote event handling
 local mt = getrawmetatable(game)
 local old = mt.__namecall
 setreadonly(mt, false)
 mt.__namecall = newcclosure(function(...)
     local args = {...}
-    local accommodationFactor = Dotlock.Prediction.accommodationFactor or 0.12348
-
     if Dotlock.Enabled and getnamecallmethod() == "FireServer" and args[2] == "UpdateMousePosI2" then
-        args[3] = Plr.Character.HumanoidRootPart.Position + (Plr.Character.HumanoidRootPart.Velocity * accommodationFactor)
+        args[3] = Plr.Character.HumanoidRootPart.Position + (Plr.Character.HumanoidRootPart.Velocity * Dotlock.Prediction.accommodationFactor)
         return old(unpack(args))
     end
     return old(...)
 end)
 
--- AIRSHOT functionality
 if Dotlock.AIRSHOT then
     Plr.Character:WaitForChild("Humanoid").StateChanged:Connect(function(old, new)
         if new == Enum.HumanoidStateType.Freefall then
