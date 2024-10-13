@@ -32,7 +32,7 @@ end
 
 local SelectedPart = "HumanoidRootPart"
 local CC = game:GetService("Workspace").CurrentCamera
-local Plr
+local Plr = nil  -- Set initial value to nil
 local enabled = false
 local mouse = game.Players.LocalPlayer:GetMouse()
 local placemarker = Instance.new("Part", game.Workspace)
@@ -116,8 +116,9 @@ game.Players.LocalPlayer:GetMouse().KeyDown:Connect(function(k)
     if k == Dotlock.Key and Dotlock.Enabled then
         if enabled == true then
             enabled = false
+            Plr = nil  -- Reset target player when unlocking
+            placemarker.CFrame = CFrame.new(0, 9999, 0)  -- Move the marker offscreen
             if Dotlock.NOTIF == true then
-                Plr = Vnly_getClosestPlayerToCursor()
                 game.StarterGui:SetCore("SendNotification", {
                     Title = "Vnly Ware",
                     Text = "Unlocked Dot Lock",
@@ -166,7 +167,7 @@ game:GetService("RunService").Stepped:connect(function()
             updateMousePosEvent:FireServer(placemarker.Position)
         end
     else
-        placemarker.CFrame = CFrame.new(0, 9999, 0)
+        placemarker.CFrame = CFrame.new(0, 9999, 0)  -- Ensure the marker is far off when untoggled
     end
 end)
 
@@ -176,7 +177,7 @@ setreadonly(mt, false)
 mt.__namecall = newcclosure(function(...)
     local args = {...}
     if Dotlock.Enabled and getnamecallmethod() == "FireServer" and args[2] == "UpdateMousePosI2" then
-        args[3] = Plr.Character.HumanoidRootPart.Position + (Plr.Character.HumanoidRootPart.Velocity * Dotlock.Prediction.accommodationFactor)
+        args[3] = Plr and Plr.Character and Plr.Character.HumanoidRootPart.Position + (Plr.Character.HumanoidRootPart.Velocity * Dotlock.Prediction.accommodationFactor)
         return old(unpack(args))
     end
     return old(...)
