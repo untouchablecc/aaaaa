@@ -32,7 +32,7 @@ end
 
 local SelectedPart = "HumanoidRootPart"
 local CC = game:GetService("Workspace").CurrentCamera
-local Plr = nil  -- Set initial value to nil
+local Plr = nil
 local enabled = false
 local mouse = game.Players.LocalPlayer:GetMouse()
 local placemarker = Instance.new("Part", game.Workspace)
@@ -116,15 +116,15 @@ game.Players.LocalPlayer:GetMouse().KeyDown:Connect(function(k)
     if k == Dotlock.Key and Dotlock.Enabled then
         if enabled == true then
             enabled = false
-            Plr = nil  -- Reset target player when unlocking
+            Plr = nil  -- Reset the target player when untoggled
             placemarker.CFrame = CFrame.new(0, 9999, 0)  -- Move the marker offscreen
-
-            -- Ensure no further firing happens (reset aim event)
+            
+            -- Ensure the firing stops
             local updateMousePosEvent = game.ReplicatedStorage:FindFirstChild("UpdateMousePosI2")
             if updateMousePosEvent then
-                updateMousePosEvent:FireServer(Vector3.new(0, 0, 0))  -- Reset firing to a null position
+                updateMousePosEvent:FireServer(Vector3.new(0, 0, 0))  -- Send null position to stop firing
             end
-
+            
             if Dotlock.NOTIF == true then
                 game.StarterGui:SetCore("SendNotification", {
                     Title = "Vnly Ware",
@@ -174,7 +174,7 @@ game:GetService("RunService").Stepped:connect(function()
             updateMousePosEvent:FireServer(placemarker.Position)
         end
     else
-        placemarker.CFrame = CFrame.new(0, 9999, 0)  -- Ensure the marker is far off when untoggled
+        placemarker.CFrame = CFrame.new(0, 9999, 0)  -- Move the marker offscreen
     end
 end)
 
@@ -187,7 +187,7 @@ mt.__namecall = newcclosure(function(...)
         if Plr and Plr.Character and Plr.Character:FindFirstChild("HumanoidRootPart") then
             args[3] = Plr.Character.HumanoidRootPart.Position + (Plr.Character.HumanoidRootPart.Velocity * Dotlock.Prediction.accommodationFactor)
         else
-            args[3] = Vector3.new(0, 0, 0)  -- Send null position if no player is targeted
+            args[3] = Vector3.new(0, 0, 0)  -- Stop firing by sending null position when untoggled
         end
         return old(unpack(args))
     end
