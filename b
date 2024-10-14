@@ -1,4 +1,42 @@
 -- =======================
+--     Macro Functionality
+-- =======================
+
+local SpeedGlitch = false
+local Mouse = game.Players.LocalPlayer:GetMouse()
+
+Mouse.KeyDown:Connect(function(Key)
+    if Key == string.lower(Miscellaneous['Macro'].KeyBind) and Miscellaneous['Macro'].BypassMacroAbuse == false then
+        if Miscellaneous['Macro'].Enabled then
+            SpeedGlitch = not SpeedGlitch
+            if SpeedGlitch == true then
+                repeat
+                    task.wait(Miscellaneous['Macro'].Speed / 100)
+                    game:GetService("VirtualInputManager"):SendKeyEvent(true, "I", false, game)
+                    task.wait(Miscellaneous['Macro'].Speed / 100)
+                    game:GetService("VirtualInputManager"):SendKeyEvent(true, "O", false, game)
+                until SpeedGlitch == false
+            end
+        end
+    end
+end)
+
+Mouse.KeyDown:Connect(function(Key)
+    if Key == string.lower(Miscellaneous['Macro'].KeyBind) and Miscellaneous['Macro'].BypassMacroAbuse == true then
+        if Miscellaneous['Macro'].Enabled then
+            SpeedGlitch = not SpeedGlitch
+            if SpeedGlitch == true then
+                repeat
+                    task.wait(Miscellaneous['Macro'].Speed / 100)
+                    game:GetService("VirtualInputManager"):SendMouseWheelEvent("0", "0", true, game)
+                    task.wait(Miscellaneous['Macro'].Speed / 100)
+                    game:GetService("VirtualInputManager"):SendMouseWheelEvent("0", "0", false, game)
+                until SpeedGlitch == false
+            end
+        end
+    end
+end)
+-- =======================
 --     InfiniteZoom Implementation
 -- =======================
 
