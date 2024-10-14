@@ -1,4 +1,13 @@
 -- =======================
+--     InfiniteZoom Implementation
+-- =======================
+
+if Miscellaneous.Movement.InfiniteZoom then
+    local player = game.Players.LocalPlayer
+    player.CameraMaxZoomDistance = math.huge  -- Allow infinite zoom out
+    player.CameraMinZoomDistance = 0.5  -- Optionally set a custom min zoom distance if needed
+end
+-- =======================
 --     NoSlow and JumpPower Hook Implementation
 -- =======================
 
